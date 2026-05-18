@@ -272,11 +272,11 @@ document.getElementById("loginOverlay").style.display="none";
 <script>
 /* ═══ DATA ═══ */
 const SC={
-  "Jan/26":{pa:11109,pa_val:2.7e9,impactados:3665,visitors:0,cliques:141,formalizados:8,desembolsos:7,desemb_val:2e6,tkm:285714,desemb_incr:5,desemb_incr_val:1.47e6,tkm_incr:294e3,pct_din:0.129,pct_ctr:0.023,s_imp:3665,s_int:141,s_des:7,s_inc:6,a_imp:null,a_con:null,a_des:null,a_inc:null},
-  "Fev/26":{pa:13057,pa_val:2.0e9,impactados:8502,visitors:1115,cliques:315,formalizados:17,desembolsos:13,desemb_val:85700,tkm:6592,desemb_incr:10,desemb_incr_val:62900,tkm_incr:6290,pct_din:0.003,pct_ctr:0.038,s_imp:1746,s_int:43,s_des:2,s_inc:1,a_imp:6756,a_con:272,a_des:11,a_inc:6},
-  "Mar/26":{pa:13666,pa_val:2.17e9,impactados:4721,visitors:1393,cliques:309,formalizados:30,desembolsos:26,desemb_val:2.976e6,tkm:114462,desemb_incr:19,desemb_incr_val:2.2e6,tkm_incr:115790,pct_din:0.106,pct_ctr:0.069,s_imp:4009,s_int:205,s_des:19,s_inc:14,a_imp:712,a_con:104,a_des:7,a_inc:5},
-  "Abr/26":{pa:12827,pa_val:2.06e9,impactados:8441,visitors:5547,cliques:1048,formalizados:32,desembolsos:25,desemb_val:2.135e6,tkm:85400,desemb_incr:18,desemb_incr_val:1.47e6,tkm_incr:81667,pct_din:0.091,pct_ctr:0.094,s_imp:2046,s_int:54,s_des:1,s_inc:0,a_imp:6395,a_con:994,a_des:23,a_inc:13},
-  "Mai/26":{pa:12189,pa_val:1.994e9,impactados:1787,visitors:990,cliques:98,formalizados:7,desembolsos:6,desemb_val:888889,tkm:148148,desemb_incr:4,desemb_incr_val:607073,tkm_incr:151768,pct_din:0.073,pct_ctr:0.054,s_imp:5161,s_int:59,s_des:1,s_inc:0,a_imp:6435,a_con:36,a_des:5,a_inc:4}
+  "Jan/26":{pa:11109,pa_val:2.7e9,impactados:3665,visitors:0,cliques:141,formalizados:8,desembolsos:7,desemb_val:2e6,tkm:285714,desemb_incr:5,desemb_incr_val:1.47e6,tkm_incr:294e3,pct_din:0.129,pct_ctr:0.023,s_imp:3665,s_int:141,s_des:7,s_inc:6,s_pa:4813,s_pa_val:1.567e9,a_imp:null,a_con:null,a_des:null,a_inc:null,a_pa:6296,a_pa_val:1.133e9},
+  "Fev/26":{pa:13057,pa_val:2.0e9,impactados:8502,visitors:1115,cliques:315,formalizados:17,desembolsos:13,desemb_val:85700,tkm:6592,desemb_incr:10,desemb_incr_val:62900,tkm_incr:6290,pct_din:0.003,pct_ctr:0.038,s_imp:1746,s_int:43,s_des:2,s_inc:1,s_pa:5657,s_pa_val:1.161e9,a_imp:6756,a_con:272,a_des:11,a_inc:6,a_pa:7400,a_pa_val:839e6},
+  "Mar/26":{pa:13666,pa_val:2.17e9,impactados:4721,visitors:1393,cliques:309,formalizados:30,desembolsos:26,desemb_val:2.976e6,tkm:114462,desemb_incr:19,desemb_incr_val:2.2e6,tkm_incr:115790,pct_din:0.106,pct_ctr:0.069,s_imp:4009,s_int:205,s_des:19,s_inc:14,s_pa:5921,s_pa_val:1.259e9,a_imp:712,a_con:104,a_des:7,a_inc:5,a_pa:7745,a_pa_val:911e6},
+  "Abr/26":{pa:12827,pa_val:2.06e9,impactados:8441,visitors:5547,cliques:1048,formalizados:32,desembolsos:25,desemb_val:2.135e6,tkm:85400,desemb_incr:18,desemb_incr_val:1.47e6,tkm_incr:81667,pct_din:0.091,pct_ctr:0.094,s_imp:2046,s_int:54,s_des:1,s_inc:0,s_pa:5557,s_pa_val:1.196e9,a_imp:6395,a_con:994,a_des:23,a_inc:13,a_pa:7270,a_pa_val:864e6},
+  "Mai/26":{pa:12189,pa_val:1.994e9,impactados:1787,visitors:990,cliques:98,formalizados:7,desembolsos:6,desemb_val:888889,tkm:148148,desemb_incr:4,desemb_incr_val:607073,tkm_incr:151768,pct_din:0.073,pct_ctr:0.054,s_imp:5161,s_int:59,s_des:1,s_inc:0,s_pa:5429,s_pa_val:1.157e9,a_imp:6435,a_con:36,a_des:5,a_inc:4,a_pa:6760,a_pa_val:837e6}
 };
 const MO=["Jan/26","Fev/26","Mar/26","Abr/26","Mai/26"];
 const MO5=[...MO];
@@ -387,8 +387,8 @@ function getData(month,pdv){
 }
 function getPDVData(month,pdv){
   const isS=pdv==="saipos";
-  const g=x=>isS?{imp:SC[x].s_imp,int:SC[x].s_int,des:SC[x].s_des,inc:SC[x].s_inc}:{imp:SC[x].a_imp,int:SC[x].a_con,des:SC[x].a_des,inc:SC[x].a_inc};
-  if(month==="Total"){return{imp:MO.reduce((s,x)=>s+(g(x).imp||0),0),int:MO.reduce((s,x)=>s+(g(x).int||0),0),des:MO.reduce((s,x)=>s+(g(x).des||0),0),inc:MO.reduce((s,x)=>s+(g(x).inc||0),0)}}
+  const g=x=>isS?{pa:SC[x].s_pa,pa_val:SC[x].s_pa_val,imp:SC[x].s_imp,int:SC[x].s_int,des:SC[x].s_des,inc:SC[x].s_inc}:{pa:SC[x].a_pa,pa_val:SC[x].a_pa_val,imp:SC[x].a_imp,int:SC[x].a_con,des:SC[x].a_des,inc:SC[x].a_inc};
+  if(month==="Total"){const last=MO[MO.length-1];return{pa:g(last).pa,pa_val:g(last).pa_val,imp:MO.reduce((s,x)=>s+(g(x).imp||0),0),int:MO.reduce((s,x)=>s+(g(x).int||0),0),des:MO.reduce((s,x)=>s+(g(x).des||0),0),inc:MO.reduce((s,x)=>s+(g(x).inc||0),0)}}
   return g(month);
 }
 
@@ -513,8 +513,8 @@ function bottomFiltersHtml(){
 function renderScorecard(){
   const secs=[
     {group:"PDV",color:"#EA1D2C",rows:[{l:"PA (elegíveis) #",k:"pa",t:"k"},{l:"$",k:"pa_val",t:"$"},{l:"Impactados (elegíveis campanha)",k:"impactados",t:"k"},{l:"Interagiram (Cliques)",k:"cliques",t:"n"},{l:"Formalizaram",k:"formalizados",t:"n"},{l:"Desembolsaram",k:"desembolsos",t:"n"},{l:"$",k:"desemb_val",t:"$"},{l:"TKM",k:"tkm",t:"$"},{l:"Desembolsaram Incremental",k:"desemb_incr",t:"n",hi:true},{l:"$",k:"desemb_incr_val",t:"$",hi:true},{l:"TKM",k:"tkm_incr",t:"$",hi:true},{l:"% dinheiros",k:"pct_din",t:"%"}]},
-    {group:"Saipos",color:"#EA1D2C",rows:[{l:"Saipos — Impactados",k:"s_imp",t:"k"},{l:"Saipos — Interagiram",k:"s_int",t:"n"},{l:"Saipos — Desembolsos",k:"s_des",t:"n"},{l:"Saipos — Desembolso Incremental",k:"s_inc",t:"n",hi:true}]},
-    {group:"Anota",color:"#EAB308",rows:[{l:"Anota — Impactados",k:"a_imp",t:"k"},{l:"Anota — Conversão",k:"a_con",t:"n"},{l:"Anota — Desembolsos",k:"a_des",t:"n"},{l:"Anota — Desembolso Incremental",k:"a_inc",t:"n",hi:true}]}
+    {group:"Saipos",color:"#EA1D2C",rows:[{l:"Saipos — PA (elegíveis) #",k:"s_pa",t:"k"},{l:"Saipos — PA ($)",k:"s_pa_val",t:"$"},{l:"Saipos — Impactados",k:"s_imp",t:"k"},{l:"Saipos — Interagiram",k:"s_int",t:"n"},{l:"Saipos — Desembolsos",k:"s_des",t:"n"},{l:"Saipos — Desembolso Incremental",k:"s_inc",t:"n",hi:true}]},
+    {group:"Anota",color:"#EAB308",rows:[{l:"Anota — PA (elegíveis) #",k:"a_pa",t:"k"},{l:"Anota — PA ($)",k:"a_pa_val",t:"$"},{l:"Anota — Impactados",k:"a_imp",t:"k"},{l:"Anota — Conversão",k:"a_con",t:"n"},{l:"Anota — Desembolsos",k:"a_des",t:"n"},{l:"Anota — Desembolso Incremental",k:"a_inc",t:"n",hi:true}]}
   ];
   function fc(v,t){if(v==null)return"—";if(t==="$")return fmt(v,"$");if(t==="%")return fmt(v,"%");if(t==="k")return fmt(v,"k");return typeof v==="number"?Math.round(v).toLocaleString("pt-BR"):v}
 
@@ -560,7 +560,8 @@ function renderResultados(){
 
   // KPIs
   if(isPDV){
-    html+='<div class="kpi-grid kpi-grid-4">';
+    html+='<div class="kpi-grid" style="grid-template-columns:repeat(5,1fr)">';
+    html+=kpiHtml("Base Elegível (PA)",fmt(d.pa,"k"),fmt(d.pa_val,"$"),isTotal?null:chg(d.pa,prev&&prev.pa),"#8B5CF6");
     html+=kpiHtml("Impactados",fmt(d.imp,"k"),null,isTotal?null:chg(d.imp,prev&&prev.imp),"#F97316");
     html+=kpiHtml(isS?"Interagiram":"Conversão",fmt(d.int),null,isTotal?null:chg(d.int,prev&&prev.int),"#EAB308");
     html+=kpiHtml("Desembolsos",fmt(d.des),null,isTotal?null:chg(d.des,prev&&prev.des),"#3B82F6");
@@ -579,9 +580,9 @@ function renderResultados(){
   // Funnel + Chart
   html+='<div class="grid-1-1h">';
   if(isPDV){
-    const fl=[{label:"Impactados",value:d.imp},{label:isS?"Interagiram":"Conversão",value:d.int},{label:"Desembolsos",value:d.des},{label:"Incrementais",value:d.inc,isIncr:true}];
+    const fl=[{label:"Base Elegível (PA)",value:d.pa},{label:"Impactados",value:d.imp},{label:isS?"Interagiram":"Conversão",value:d.int},{label:"Desembolsos",value:d.des},{label:"Incrementais",value:d.inc,isIncr:true}];
     html+='<div class="card"><div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EA1D2C" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg><h3>Funil '+lbl+' — '+label+'</h3></div>';
-    html+=verticalFunnelHtml(fl,d.imp||1);
+    html+=verticalFunnelHtml(fl,d.pa||d.imp||1);
     html+=incrBoxHtml(d.inc,d.des,m);
     html+='</div>';
   } else {
@@ -649,10 +650,10 @@ function renderResultados(){
     const cOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{usePointStyle:true,padding:14,font:{size:11}}}},scales:{y:{beginAtZero:true,grid:{color:"#F3F4F6"},ticks:{font:{size:11},color:"#9CA3AF"}},x:{grid:{display:false},ticks:{font:{size:12},color:"#9CA3AF"}}}};
 
     if(isPDV){
-      const g=x=>isS?{imp:SC[x].s_imp,int:SC[x].s_int,des:SC[x].s_des,inc:SC[x].s_inc}:{imp:SC[x].a_imp,int:SC[x].a_con,des:SC[x].a_des,inc:SC[x].a_inc};
-      const md=chartMO.map(x=>({name:x,...g(x)})).filter(x=>x.imp!=null);
+      const g=x=>isS?{pa:SC[x].s_pa,imp:SC[x].s_imp,int:SC[x].s_int,des:SC[x].s_des,inc:SC[x].s_inc}:{pa:SC[x].a_pa,imp:SC[x].a_imp,int:SC[x].a_con,des:SC[x].a_des,inc:SC[x].a_inc};
+      const md=chartMO.map(x=>({name:x,...g(x)})).filter(x=>x.pa!=null||x.imp!=null);
       if(md.length>0){
-        charts.main=new Chart(document.getElementById("chartMain"),{type:"bar",data:{labels:md.map(x=>x.name),datasets:[{label:"Desembolsos",data:md.map(x=>x.des||0),backgroundColor:"#3B82F6",borderRadius:4,barPercentage:.35,order:2},{label:"Incrementais",data:md.map(x=>x.inc||0),backgroundColor:"#10B981",borderRadius:4,barPercentage:.35,order:2},{label:"Impactados",data:md.map(x=>x.imp||0),type:"line",borderColor:"#EA1D2C",backgroundColor:"#EA1D2C",pointRadius:5,borderWidth:2,tension:.3,yAxisID:"y1",order:1}]},options:{...cOpts,scales:{...cOpts.scales,y1:{position:"right",beginAtZero:true,grid:{display:false},ticks:{font:{size:11},color:"#9CA3AF"}}}}});
+        charts.main=new Chart(document.getElementById("chartMain"),{type:"bar",data:{labels:md.map(x=>x.name),datasets:[{label:"Desembolsos",data:md.map(x=>x.des||0),backgroundColor:"#3B82F6",borderRadius:4,barPercentage:.35,order:2},{label:"Incrementais",data:md.map(x=>x.inc||0),backgroundColor:"#10B981",borderRadius:4,barPercentage:.35,order:2},{label:"Base Elegível",data:md.map(x=>x.pa||0),type:"line",borderColor:"#8B5CF6",backgroundColor:"#8B5CF6",pointRadius:5,borderWidth:2,tension:.3,yAxisID:"y1",order:1},{label:"Impactados",data:md.map(x=>x.imp||0),type:"line",borderColor:"#EA1D2C",backgroundColor:"#EA1D2C",pointRadius:5,borderWidth:2,tension:.3,yAxisID:"y1",order:1,borderDash:[5,5]}]},options:{...cOpts,scales:{...cOpts.scales,y1:{position:"right",beginAtZero:true,grid:{display:false},ticks:{font:{size:11},color:"#9CA3AF"}}}}});
       }
     } else {
       /* Geral charts — filter by selected months */
@@ -1058,31 +1059,10 @@ function clearAllFilters(){currentPDV="geral";currentMonth="Total";currentGaller
 function exportScorecard(){
   const secs=[
     {group:"PDV",rows:[{l:"PA (elegíveis) #",k:"pa"},{l:"PA ($)",k:"pa_val"},{l:"Impactados",k:"impactados"},{l:"Interagiram (Cliques)",k:"cliques"},{l:"Formalizaram",k:"formalizados"},{l:"Desembolsaram",k:"desembolsos"},{l:"Desembolso ($)",k:"desemb_val"},{l:"TKM",k:"tkm"},{l:"Desembolsaram Incremental",k:"desemb_incr"},{l:"Desemb. Incremental ($)",k:"desemb_incr_val"},{l:"TKM Incremental",k:"tkm_incr"},{l:"% Dinheiros",k:"pct_din"}]},
-    {group:"Saipos",rows:[{l:"Saipos — Impactados",k:"s_imp"},{l:"Saipos — Interagiram",k:"s_int"},{l:"Saipos — Desembolsos",k:"s_des"},{l:"Saipos — Desemb. Incremental",k:"s_inc"}]},
-    {group:"Anota",rows:[{l:"Anota — Impactados",k:"a_imp"},{l:"Anota — Conversão",k:"a_con"},{l:"Anota — Desembolsos",k:"a_des"},{l:"Anota — Desemb. Incremental",k:"a_inc"}]}
+    {group:"Saipos",rows:[{l:"Saipos — PA (elegíveis) #",k:"s_pa"},{l:"Saipos — PA ($)",k:"s_pa_val"},{l:"Saipos — Impactados",k:"s_imp"},{l:"Saipos — Interagiram",k:"s_int"},{l:"Saipos — Desembolsos",k:"s_des"},{l:"Saipos — Desemb. Incremental",k:"s_inc"}]},
+    {group:"Anota",rows:[{l:"Anota — PA (elegíveis) #",k:"a_pa"},{l:"Anota — PA ($)",k:"a_pa_val"},{l:"Anota — Impactados",k:"a_imp"},{l:"Anota — Conversão",k:"a_con"},{l:"Anota — Desembolsos",k:"a_des"},{l:"Anota — Desemb. Incremental",k:"a_inc"}]}
   ];
   const data=[["Grupo","Etapa",...MO5]];
   secs.forEach(sec=>{sec.rows.forEach(row=>{
     const r=[sec.group,row.l];
-    MO5.forEach(m=>{r.push(SC[m]&&SC[m][row.k]!=null?SC[m][row.k]:null)});
-    data.push(r);
-  })});
-  const ws=XLSX.utils.aoa_to_sheet(data);
-  ws['!cols']=[{wch:8},{wch:30},...MO5.map(()=>({wch:14}))];
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,"Scorecard");
-  XLSX.writeFile(wb,"scorecard_credito_salao.xlsx");
-}
-
-function openLightbox(src){document.getElementById('lightboxImg').src=src;document.getElementById('lightbox').classList.add('open');document.body.style.overflow='hidden'}
-function closeLightbox(){document.getElementById('lightbox').classList.remove('open');document.body.style.overflow=''}
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox()});
-
-/* Init */
-currentPDV="geral";currentMonth="Total";currentGalleryPDV="geral";
-updateFilters();
-switchPage("resultados");
-</script>
-</body>
-</html>
-                                                                                                                                                                                                                                                                                                                      
+    
