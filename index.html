@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crédito Salão — Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:#F7F8FA;color:#111827;-webkit-font-smoothing:antialiased;min-height:100vh}
+button{font-family:inherit;cursor:pointer}
+::-webkit-scrollbar{height:6px;width:6px}
+::-webkit-scrollbar-track{background:#F3F4F6;border-radius:3px}
+::-webkit-scrollbar-thumb{background:#D1D5DB;border-radius:3px}
+
+/* ─── NAVBAR ─── */
+.navbar{background:white;border-bottom:1px solid #EBEBEB;padding:0 28px;display:flex;align-items:center;justify-content:center;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+.nav-center{display:flex;justify-content:center}
+.nav-brand{position:absolute;left:28px;top:50%;transform:translateY(-50%);display:flex;align-items:center;gap:10px;padding-right:18px;border-right:1px solid #F0F0F0}
+.nav-logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#059669,#10B981);display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:13px;animation:logoPulse 2.5s ease-in-out infinite;box-shadow:0 2px 8px rgba(5,150,105,.35)}
+@keyframes logoPulse{0%,100%{transform:scale(1);box-shadow:0 2px 8px rgba(5,150,105,.35)}50%{transform:scale(1.06);box-shadow:0 4px 16px rgba(5,150,105,.5)}}
+.nav-title{font-size:13px;font-weight:700;color:#111827;line-height:1.2}
+.nav-sub{font-size:9px;color:#9CA3AF;font-weight:500}
+.nav-tabs{display:flex;gap:2px}
+.nav-tab{display:flex;align-items:center;gap:5px;padding:7px 14px;font-size:13px;font-weight:500;color:#6B7280;background:transparent;border:1px solid transparent;border-radius:8px;transition:all .15s}
+.nav-tab.active{font-weight:600;color:#EA1D2C;background:#FEF2F2;border-color:#FECACA}
+.nav-tab:hover:not(.active){background:#F9FAFB}
+
+/* ─── FILTERS BAR ─── */
+.filters-bar{background:white;border-bottom:1px solid #F0F0F0;padding:10px 28px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;position:sticky;top:56px;z-index:99;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.filters-bar.hidden{display:none}
+.filter-group{display:flex;align-items:center;gap:6px}
+.filter-label{font-size:11px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.05em}
+.pill-group{display:flex;gap:3px;background:#F3F4F6;border-radius:8px;padding:3px}
+.pill{padding:4px 12px;font-size:12px;font-weight:400;color:#6B7280;background:transparent;border:none;border-radius:6px;transition:all .15s}
+.pill.active{font-weight:600;color:white;background:#EA1D2C}
+.pill.total-pill.active{background:#312E81}
+
+/* Bottom filters bar */
+.filters-bar-bottom{background:white;border:1px solid #F0F0F0;border-radius:12px;padding:12px 20px;display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.filters-bar-bottom .filter-label{font-size:11px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.05em}
+
+/* ─── CONTENT ─── */
+.content{padding:22px 28px;max-width:1200px;margin:0 auto}
+.page-header{margin-bottom:16px}
+.page-title{font-size:20px;font-weight:700;color:#111827;margin:0}
+.page-subtitle{font-size:13px;color:#9CA3AF;margin:3px 0 0}
+.page{display:none}
+.page.active{display:block}
+
+/* ─── KPI ─── */
+.kpi-grid{display:grid;gap:12px;margin-bottom:20px}
+.kpi-grid-5{grid-template-columns:repeat(5,1fr)}
+.kpi-grid-4{grid-template-columns:repeat(4,1fr)}
+.kpi-card{background:white;border-radius:14px;padding:18px 22px;border:1px solid #F0F0F0;position:relative;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04);transition:box-shadow .2s,transform .2s;cursor:default}
+.kpi-card:hover{box-shadow:0 6px 24px rgba(0,0,0,.08);transform:translateY(-2px)}
+.kpi-accent{position:absolute;top:0;left:0;width:4px;height:100%;border-radius:14px 0 0 14px}
+.kpi-inner{display:flex;justify-content:space-between;align-items:flex-start}
+.kpi-label{font-size:11px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.kpi-value{font-size:26px;font-weight:700;color:#111827;line-height:1.1}
+.kpi-sub{font-size:12px;color:#6B7280;margin-top:4px}
+.kpi-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0}
+.kpi-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+.kpi-trend{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:600;padding:2px 7px;border-radius:20px}
+.kpi-trend.up{color:#059669;background:#ECFDF5}
+.kpi-trend.down{color:#DC2626;background:#FEF2F2}
+
+/* ─── CARDS ─── */
+.card{background:white;border-radius:14px;padding:20px 24px;border:1px solid #F0F0F0;box-shadow:0 1px 3px rgba(0,0,0,.03)}
+.card-title{display:flex;align-items:center;gap:8px;margin-bottom:14px;margin-top:6px}
+.card-title h3{font-size:15px;font-weight:700;color:#111827;margin:0}
+.card-title svg{color:#EA1D2C}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.grid-1-1h{display:grid;grid-template-columns:1fr 1.5fr;gap:14px;margin-bottom:20px}
+.grid-right-stack{display:flex;flex-direction:column;gap:14px}
+
+/* ─── VERTICAL FUNNEL (boxes with arrows) ─── */
+.funnel-vertical{display:flex;flex-direction:column;align-items:center;gap:0;padding:4px 0}
+.funnel-step{display:flex;flex-direction:column;align-items:center}
+.funnel-box{border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:7px 0;color:white;position:relative;min-height:38px}
+.funnel-box-value{font-size:17px;font-weight:800;line-height:1.1}
+.funnel-box-label{font-size:9px;font-weight:500;opacity:.9;margin-top:1px;text-transform:uppercase;letter-spacing:.04em}
+.funnel-box-pct{position:absolute;right:-54px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:600;color:#6B7280;background:#F3F4F6;padding:2px 6px;border-radius:10px;white-space:nowrap}
+.funnel-connector{display:flex;flex-direction:column;align-items:center;height:14px;position:relative}
+.funnel-connector svg{color:#D1D5DB}
+.funnel-box.incr{background:transparent!important;border:2px dashed #059669;color:#059669;text-align:center}
+.funnel-box.incr .funnel-box-value{color:#059669;text-align:center;width:100%}
+.funnel-box.incr .funnel-box-label{color:#059669;opacity:1;text-align:center;width:100%}
+
+.incr-box{margin-top:8px;padding:10px 14px;background:linear-gradient(135deg,#F0FDF4,#ECFDF5);border-radius:8px;border:1px solid #A7F3D0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px}
+.incr-label{font-size:10px;font-weight:600;color:#166534;text-transform:uppercase;letter-spacing:.06em}
+.incr-sub{font-size:11px;color:#6B7280;margin-top:2px}
+.incr-value{font-size:22px;font-weight:800;color:#059669}
+
+/* ─── CAMPAIGN CARDS (calendar) ─── */
+.camp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.camp-card{background:white;border-radius:12px;border:1px solid #F0F0F0;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,.03);transition:box-shadow .15s,transform .15s;position:relative;overflow:hidden}
+.camp-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);transform:translateY(-1px)}
+.camp-card-accent{position:absolute;top:0;left:0;right:0;height:3px}
+.camp-card.ativa .camp-card-accent{background:linear-gradient(90deg,#F59E0B,#EAB308)}
+.camp-card.plan .camp-card-accent{background:linear-gradient(90deg,#3B82F6,#60A5FA)}
+.camp-card.done .camp-card-accent{background:linear-gradient(90deg,#10B981,#34D399)}
+.camp-card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;margin-top:4px}
+.camp-card-status{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:2px 8px;border-radius:10px}
+.camp-card-status.ativa{background:#FEF3C7;color:#92400E}
+.camp-card-status.plan{background:#DBEAFE;color:#1E40AF}
+.camp-card-status.done{background:#D1FAE5;color:#065F46}
+.camp-card-pdv{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:2px 8px;border-radius:10px}
+.camp-card-pdv.saipos{background:#FEE2E2;color:#991B1B}
+.camp-card-pdv.anota{background:#FEF3C7;color:#92400E}
+.camp-card-name{font-size:13px;font-weight:600;color:#111827;margin-bottom:10px;line-height:1.3}
+.camp-card-info{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.camp-card-field{display:flex;flex-direction:column}
+.camp-card-field-label{font-size:9px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.05em}
+.camp-card-field-value{font-size:12px;font-weight:500;color:#374151;margin-top:1px}
+.camp-card-date{display:flex;align-items:center;gap:4px;margin-top:10px;padding-top:8px;border-top:1px solid #F3F4F6;font-size:11px;color:#6B7280}
+.camp-card-date svg{color:#9CA3AF;flex-shrink:0}
+
+/* ─── INSIGHTS ─── */
+.insights-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+.insight-card{padding:16px 20px;border-radius:10px}
+.insight-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.insight-value{font-size:22px;font-weight:800}
+.insight-sub{font-size:12px;color:#6B7280;margin-top:4px}
+.insight-green{background:linear-gradient(135deg,#F0FDF4,#ECFDF5);border:1px solid #A7F3D0}
+.insight-green .insight-label,.insight-green .insight-value{color:#065F46}
+.insight-blue{background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:1px solid #93C5FD}
+.insight-blue .insight-label,.insight-blue .insight-value{color:#1E40AF}
+.insight-amber{background:linear-gradient(135deg,#FFF7ED,#FEF3C7);border:1px solid #FDE68A}
+.insight-amber .insight-label,.insight-amber .insight-value{color:#92400E}
+.insight-pink{background:linear-gradient(135deg,#FDF2F8,#FCE7F3);border:1px solid #F9A8D4}
+.insight-pink .insight-label,.insight-pink .insight-value{color:#9D174D}
+
+/* ─── PDV HEADER ─── */
+.pdv-header{border-radius:14px;padding:18px 28px;margin-bottom:20px;color:white;display:flex;justify-content:space-between;align-items:center}
+.pdv-header.saipos{background:linear-gradient(135deg,#7F1D1D,#991B1B,#DC2626)}
+.pdv-header.anota{background:linear-gradient(135deg,#78350F,#92400E,#D97706)}
+.pdv-avatar{width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px}
+.pdv-stats{display:flex;gap:32px}
+.pdv-stat{text-align:center}
+.pdv-stat-label{font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.06em}
+.pdv-stat-value{font-size:24px;font-weight:800}
+
+/* ─── TABLES ─── */
+.sc-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.sc-tbl th{padding:5px 8px;font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.04em;color:#9CA3AF;border-bottom:2px solid #E5E7EB}
+.sc-tbl th:first-child{width:32px}
+.sc-tbl th.etapa{text-align:left;min-width:170px}
+.sc-tbl th.month{text-align:right;font-weight:700;font-size:10px;color:#111827;min-width:72px}
+.sc-tbl td{padding:4px 8px;font-weight:500;font-size:11px;color:#111827;line-height:1.3}
+.sc-tbl td.val{text-align:right}
+.sc-tbl td.null{color:#D1D5DB}
+.sc-tbl tr.hi{background:#F0FDF4}
+.sc-tbl tr.hi td{font-weight:600;color:#065F46}
+.sc-tbl tr.even{background:#FAFAFA}
+.sc-group-cell{padding:5px 4px;font-weight:700;font-size:10px;border-right:3px solid;vertical-align:middle;text-align:center;writing-mode:vertical-rl;text-orientation:mixed;letter-spacing:.08em}
+
+.chart-wrap{position:relative;width:100%;height:280px}
+.chart-wrap-sm{height:210px}
+.footer{padding:14px 28px;text-align:center;font-size:10px;color:#D1D5DB;border-top:1px solid #F3F4F6;margin-top:24px}
+
+/* ─── GALLERY ─── */
+.gallery-filters{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px}
+.gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.gallery-item{background:white;border-radius:14px;border:1px solid #F0F0F0;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.04);transition:box-shadow .2s,transform .2s}
+.gallery-item:hover{box-shadow:0 8px 28px rgba(0,0,0,.1);transform:translateY(-2px)}
+.gallery-img-wrap{width:100%;height:240px;overflow:hidden;background:#F9FAFB;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #F0F0F0}
+.gallery-img-wrap img{max-width:100%;max-height:100%;object-fit:contain;cursor:pointer}
+.lightbox{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:1000;align-items:center;justify-content:center;cursor:pointer}
+.lightbox.open{display:flex}
+.lightbox img{max-width:90%;max-height:90%;object-fit:contain;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.4)}
+.lightbox-close{position:absolute;top:20px;right:28px;color:white;font-size:32px;font-weight:300;cursor:pointer;width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(255,255,255,.1)}
+.gallery-info{padding:14px 16px}
+.gallery-camp-name{font-size:13px;font-weight:600;color:#111827;margin-bottom:8px;line-height:1.3}
+.gallery-meta{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.gallery-meta-item{display:flex;flex-direction:column}
+.gallery-meta-label{font-size:9px;font-weight:600;color:#9CA3AF;text-transform:uppercase;letter-spacing:.05em}
+.gallery-meta-value{font-size:11px;font-weight:500;color:#374151}
+
+/* ─── CHAT (Agente) ─── */
+.chat-container{display:flex;flex-direction:column;height:calc(100vh - 280px);min-height:300px}
+.chat-messages{flex:1;overflow-y:auto;padding:16px 0;display:flex;flex-direction:column;gap:12px}
+.chat-msg{max-width:80%;padding:12px 16px;border-radius:14px;font-size:13px;line-height:1.5;animation:chatFade .3s ease}
+.chat-msg.bot{align-self:flex-start;background:#F3F4F6;color:#111827;border-bottom-left-radius:4px}
+.chat-msg.user{align-self:flex-end;background:#EA1D2C;color:white;border-bottom-right-radius:4px}
+.chat-input-bar{display:flex;gap:8px;padding:12px 0;border-top:1px solid #F0F0F0}
+.chat-input{flex:1;padding:10px 16px;font-size:13px;border:1px solid #E5E7EB;border-radius:10px;outline:none;transition:border-color .15s;font-family:inherit}
+.chat-input:focus{border-color:#EA1D2C}
+.chat-send{padding:10px 20px;background:#EA1D2C;color:white;border:none;border-radius:10px;font-weight:600;font-size:13px;transition:background .15s}
+.chat-send:hover{background:#B91C1C}
+@keyframes chatFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.btn-clear{display:inline-flex;align-items:center;gap:4px;padding:5px 14px;font-size:11px;font-weight:600;color:#6B7280;background:#F3F4F6;border:1px solid #E5E7EB;border-radius:8px;cursor:pointer;transition:all .15s}
+.btn-clear:hover{background:#E5E7EB;color:#374151}
+.btn-clear svg{flex-shrink:0}
+
+@media(max-width:1200px){.kpi-grid-5{grid-template-columns:repeat(3,1fr)}.insights-grid{grid-template-columns:1fr}.camp-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}.gallery-grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}}
+@media(max-width:900px){.grid-2,.grid-1-1h{grid-template-columns:1fr}.kpi-grid-4,.kpi-grid-5{grid-template-columns:repeat(2,1fr)}.pdv-header{flex-direction:column;gap:16px}.pdv-stats{gap:20px}.filters-bar{flex-direction:column;align-items:flex-start}.filters-bar-bottom{flex-direction:column;align-items:flex-start}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#059669 0%,#10B981 50%,#34D399 100%);z-index:9999;display:flex;align-items:center;justify-content:center">
+<div style="background:white;border-radius:20px;padding:48px 40px;box-shadow:0 25px 50px rgba(0,0,0,.25);text-align:center;max-width:380px;width:90%">
+<div style="width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,#059669,#10B981);display:flex;align-items:center;justify-content:center;margin:0 auto 20px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg></div>
+<div style="font-size:22px;font-weight:800;color:#111827;margin-bottom:4px">Crédito Salão</div>
+<p style="font-size:13px;color:#9CA3AF;margin-bottom:28px">Dashboard de Campanhas</p>
+<input id="loginPass" type="password" placeholder="Digite a senha" onkeydown="if(event.key==='Enter')checkLogin()" style="width:100%;padding:12px 16px;border:2px solid #E5E7EB;border-radius:10px;font-size:14px;outline:none;transition:border .2s;margin-bottom:12px" onfocus="this.style.borderColor='#10B981'" onblur="this.style.borderColor='#E5E7EB'">
+<div id="loginError" style="color:#EF4444;font-size:12px;margin-bottom:12px;display:none">Senha incorreta</div>
+<button onclick="checkLogin()" style="width:100%;padding:12px;background:linear-gradient(135deg,#059669,#10B981);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s" onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">Entrar</button>
+</div>
+</div>
+<script>
+function checkLogin(){
+var p=document.getElementById("loginPass").value;
+if(p==="credito2026"){
+document.getElementById("loginOverlay").style.display="none";
+sessionStorage.setItem("dash_auth","1");
+}else{
+document.getElementById("loginError").style.display="block";
+document.getElementById("loginPass").style.borderColor="#EF4444";
+}
+}
+if(sessionStorage.getItem("dash_auth")==="1"){
+document.getElementById("loginOverlay").style.display="none";
+}
+</script>
+
+<!-- NAVBAR -->
+<div class="navbar">
+  <div class="nav-brand">
+    <div class="nav-logo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg></div>
+    <div><div class="nav-title">Crédito Salão</div><div class="nav-sub">Dashboard de Campanhas</div></div>
+  </div>
+  <div class="nav-center">
+    <div class="nav-tabs" id="navTabs">
+      <button class="nav-tab" data-page="scorecard" onclick="switchPage('scorecard')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> Scorecard</button>
+      <button class="nav-tab active" data-page="resultados" onclick="switchPage('resultados')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Resultados</button>
+      <button class="nav-tab" data-page="comunicacoes" onclick="switchPage('comunicacoes')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Comunicações</button>
+      <button class="nav-tab" data-page="agente" onclick="switchPage('agente')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Agente</button>
+    </div>
+  </div>
+</div>
+
+<!-- FILTERS BAR (only for Resultados) -->
+<div class="filters-bar hidden" id="filtersBar">
+  <div class="filter-group">
+    <span class="filter-label">PDV</span>
+    <div class="pill-group" id="pdvPills"></div>
+  </div>
+  <div class="filter-group">
+    <span class="filter-label">Período</span>
+    <div class="pill-group" id="monthPills"></div>
+  </div>
+  <button class="btn-clear" onclick="clearAllFilters()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Limpar filtros</button>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+  <div class="page" id="page-scorecard"></div>
+  <div class="page active" id="page-resultados"></div>
+  <div class="page" id="page-comunicacoes"></div>
+  <div class="page" id="page-agente"></div>
+</div>
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()"><span class="lightbox-close">&times;</span><img id="lightboxImg" src="" alt="Ampliação"></div>
+
+<div class="footer">iFood Salão — Growth Team — Crédito PDV — Atualizado em 18/05/2026</div>
+
+<script>
+/* ═══ DATA ═══ */
+const SC={
+  "Jan/26":{pa:11109,pa_val:2.7e9,impactados:3665,visitors:0,cliques:141,formalizados:8,desembolsos:7,desemb_val:2e6,tkm:285714,desemb_incr:5,desemb_incr_val:1.47e6,tkm_incr:294e3,pct_din:0.129,pct_ctr:0.023,s_imp:3665,s_int:141,s_des:7,s_inc:6,s_pa:4813,s_pa_val:1.567e9,a_imp:null,a_con:null,a_des:null,a_inc:null,a_pa:6296,a_pa_val:1.133e9},
+  "Fev/26":{pa:13057,pa_val:2.0e9,impactados:8502,visitors:1115,cliques:315,formalizados:17,desembolsos:13,desemb_val:85700,tkm:6592,desemb_incr:10,desemb_incr_val:62900,tkm_incr:6290,pct_din:0.003,pct_ctr:0.038,s_imp:1746,s_int:43,s_des:2,s_inc:1,s_pa:5657,s_pa_val:1.161e9,a_imp:6756,a_con:272,a_des:11,a_inc:6,a_pa:7400,a_pa_val:839e6},
+  "Mar/26":{pa:13666,pa_val:2.17e9,impactados:4721,visitors:1393,cliques:309,formalizados:30,desembolsos:26,desemb_val:2.976e6,tkm:114462,desemb_incr:19,desemb_incr_val:2.2e6,tkm_incr:115790,pct_din:0.106,pct_ctr:0.069,s_imp:4009,s_int:205,s_des:19,s_inc:14,s_pa:5921,s_pa_val:1.259e9,a_imp:712,a_con:104,a_des:7,a_inc:5,a_pa:7745,a_pa_val:911e6},
+  "Abr/26":{pa:12827,pa_val:2.06e9,impactados:8441,visitors:5547,cliques:1048,formalizados:32,desembolsos:25,desemb_val:2.135e6,tkm:85400,desemb_incr:18,desemb_incr_val:1.47e6,tkm_incr:81667,pct_din:0.091,pct_ctr:0.094,s_imp:2046,s_int:54,s_des:1,s_inc:0,s_pa:5557,s_pa_val:1.196e9,a_imp:6395,a_con:994,a_des:23,a_inc:13,a_pa:7270,a_pa_val:864e6},
+  "Mai/26":{pa:12189,pa_val:1.994e9,impactados:1787,visitors:990,cliques:98,formalizados:7,desembolsos:6,desemb_val:888889,tkm:148148,desemb_incr:4,desemb_incr_val:607073,tkm_incr:151768,pct_din:0.073,pct_ctr:0.054,s_imp:5161,s_int:59,s_des:1,s_inc:0,s_pa:5429,s_pa_val:1.157e9,a_imp:6435,a_con:36,a_des:5,a_inc:4,a_pa:6760,a_pa_val:837e6}
+};
+const MO=["Jan/26","Fev/26","Mar/26","Abr/26","Mai/26"];
+const MO5=[...MO];
+
+/* CNPJ-unique impactados for Total view (from BE data analysis) */
+const TOTAL_IMPACTADOS_UNIQUE = 10753; /* CNPJs únicos impactados Jan-Mai que estão na base Salão atual */
+
+const CAMPS=[
+  {n:"1_campanha_geral",pdv:"saipos",mo:"Jan/26",dt:"09/01–16/01",pub:"Fumaça",loc:"Pop up",pa:"App do Gestor",ml:2930,vis:null,cl:85,img:null},
+  {n:"2_campanha_faixas_PA",pdv:"saipos",mo:"Jan/26",dt:"20/01–27/01",pub:"Fumaça",loc:"Pop up",pa:"App do Gestor",ml:13963,vis:null,cl:57,img:null},
+  {n:"anota_0402_1902",pdv:"anota",mo:"Fev/26",dt:"04/02–19/02",pub:"Fumaça",loc:"Header",pa:"Kanban e Relatórios",ml:1966,vis:null,cl:null,img:null},
+  {n:"3_campanha_menor40k",pdv:"saipos",mo:"Fev/26",dt:"09/02–16/02",pub:"Fumaça",loc:"Header",pa:"Itens Vendidos",ml:884,vis:305,cl:33,img:["Quero_Saber_mais_até_40k.png","Quero_contratar_até_40k.png","Simular_Crédito_até_40k.png"]},
+  {n:"4_campanha_maior300k_1",pdv:"saipos",mo:"Fev/26",dt:"19/02–26/02",pub:"Fumaça",loc:"Header",pa:"Itens Vendidos",ml:288,vis:185,cl:7,img:["Grupo_1_acima_300k.png"]},
+  {n:"4_campanha_maior300k_2",pdv:"saipos",mo:"Fev/26",dt:"19/02–26/02",pub:"Fumaça",loc:"Header",pa:"Itens Vendidos",ml:287,vis:460,cl:2,img:["Grupo_2_acima_300k.png"]},
+  {n:"4_campanha_maior300k_3",pdv:"saipos",mo:"Fev/26",dt:"19/02–26/02",pub:"Fumaça",loc:"Header",pa:"Itens Vendidos",ml:288,vis:165,cl:7,img:["Grupo_3_acima_300k.png"]},
+  {n:"anota_1_campanha_crm_24h",pdv:"anota",mo:"Fev/26",dt:"19/02",pub:"Fumaça",loc:"Header",pa:"Kanban e Relatórios",ml:6617,vis:null,cl:null,img:null},
+  {n:"4_saipos_app_gestor",pdv:"saipos",mo:"Mar/26",dt:"04/03–11/03",pub:"Fumaça",loc:"Pop up",pa:"App do Gestor",ml:1036,vis:385,cl:78,img:["Grupo_4_app_Gestão__Androind.png"]},
+  {n:"anota_0903",pdv:"anota",mo:"Mar/26",dt:"09/03–31/03",pub:"Fumaça",loc:"Pop up",pa:"Kanban",ml:901,vis:665,cl:112,img:["Página8.png"]},
+  {n:"saipos_disp_red_1703",pdv:"saipos",mo:"Mar/26",dt:"17/03–25/03",pub:"Fumaça",loc:"Pop up",pa:"App do Gestor",ml:3912,vis:343,cl:192,img:["Grupo_5_app_Gestão__Androind_-.png"]},
+  {n:"anota_Disp_red_0604",pdv:"anota",mo:"Abr/26",dt:"06/04–14/04",pub:"Fumaça",loc:"Header",pa:"Kanban e Relatórios",ml:6086,vis:4477,cl:895,img:["Página9.png"]},
+  {n:"saipos_antigos_1404",pdv:"saipos",mo:"Abr/26",dt:"14/04–22/04",pub:"Fumaça",loc:"Pop up",pa:"App do Gestor",ml:1892,vis:790,cl:null,img:["Clientes_antigos_app_Gestão__A.png"]},
+  {n:"Saipos_TCT_2704",pdv:"saipos",mo:"Abr/26",dt:"27/04–05/05",pub:"TCT",loc:"Pop up",pa:"App do Gestor",ml:181,vis:59,cl:61,img:["Clientes_TCT_app_Gestão__Andro.png"]},
+  {n:"anota_TCT_2704",pdv:"anota",mo:"Abr/26",dt:"27/04–05/05",pub:"TCT",loc:"Header",pa:"Kanban e Relatórios",ml:309,vis:221,cl:160,img:null},
+  {n:"Anota_Oferta_Combinada_0605",pdv:"anota",mo:"Mai/26",dt:"06/05",pub:"Fumaça/TCT",loc:"Pop up",pa:"Kanban",ml:538,vis:502,cl:27,img:["anota_oferta_combinada_comunicação_0605.png"]},
+  {n:"Saipos_Oferta_Combinada_1105",pdv:"saipos",mo:"Mai/26",dt:"11/05–18/05",pub:"Fumaça/TCT",loc:"Pop up",pa:"App do Gestor",ml:772,vis:488,cl:3,img:["Crédito_+_Maquinona_app_Gestão_.png"]},
+  {n:"Anota_Oferta_Combinada_1805",pdv:"anota",mo:"Mai/26",dt:"18/05–25/05",pub:"Fumaça/TCT",loc:"Header",pa:"Kanban e Relatórios",ml:null,vis:null,cl:null,img:["anota_combinada_campanha_1805.png"]}
+];
+
+/* Friendly campaign names */
+const CAMP_NAMES={
+  "1_campanha_geral":"Campanha Geral",
+  "2_campanha_faixas_PA":"Faixas PA",
+  "anota_0402_1902":"Anota Crédito",
+  "3_campanha_menor40k":"Crédito até 40K",
+  "4_campanha_maior300k_1":"Acima 300K (Grupo 1)",
+  "4_campanha_maior300k_2":"Acima 300K (Grupo 2)",
+  "4_campanha_maior300k_3":"Acima 300K (Grupo 3)",
+  "anota_1_campanha_crm_24h":"Anota CRM 24h",
+  "4_saipos_app_gestor":"Saipos App Gestor",
+  "anota_0903":"Anota Mar/26",
+  "saipos_disp_red_1703":"Saipos Disparo Red",
+  "anota_Disp_red_0604":"Anota Disparo Red",
+  "saipos_antigos_1404":"Clientes Antigos",
+  "Saipos_TCT_2704":"Saipos TCT",
+  "anota_TCT_2704":"Anota TCT",
+  "Anota_Oferta_Combinada_0605":"Anota Oferta Combinada",
+  "Saipos_Oferta_Combinada_1105":"Saipos Oferta Combinada",
+  "Anota_Oferta_Combinada_1805":"Anota Oferta Combinada (Mai)"
+};
+
+const CAL=[
+  {pdv:"saipos",name:"Saipos Oferta Combinada",dt_ini:"11/05",dt_fim:"18/05",status:"Ativa",pub:"Fumaça/TCT",pa:"App do Gestor",loc:"Pop up"},
+  {pdv:"saipos",name:"Saipos + Maquinona",dt_ini:"18/05",dt_fim:"25/05",status:"Planejamento",pub:"Fumaça/TCT",pa:"App do Gestor",loc:"Pop up"},
+  {pdv:"saipos",name:"Banner Fixo Saipos",dt_ini:"18/05",dt_fim:"—",status:"Planejamento",pub:"Fumaça/TCT",pa:"Kanban",loc:"Header"},
+  {pdv:"anota",name:"Anota Oferta Combinada",dt_ini:"18/05",dt_fim:"25/05",status:"Planejamento",pub:"Fumaça/TCT",pa:"Kanban e Relatórios",loc:"Header"},
+  {pdv:"anota",name:"Banner Geral Anota",dt_ini:"18/05",dt_fim:"20/06",status:"Planejamento",pub:"Fumaça",pa:"Kanban e Relatórios",loc:"Header"},
+  {pdv:"saipos",name:"Faixas PA (Restantes)",dt_ini:"25/05",dt_fim:"29/05",status:"Planejamento",pub:"Fumaça",pa:"App do Gestor",loc:"Pop up"},
+  {pdv:"saipos",name:"Conversão Final do Funil",dt_ini:"25/05",dt_fim:"29/05",status:"Planejamento",pub:"Fumaça",pa:"Tela Vendas por Período",loc:"Header"},
+  {pdv:"anota",name:"Faixas PA",dt_ini:"25/05",dt_fim:"29/05",status:"Planejamento",pub:"Fumaça",pa:"Kanban e Relatórios",loc:"Header"},
+  {pdv:"anota",name:"Anota + Maquinona",dt_ini:"25/05",dt_fim:"29/05",status:"Planejamento",pub:"Fumaça/TCT",pa:"Kanban e Relatórios",loc:"Header"},
+  {pdv:"saipos",name:"Novos Entrantes",dt_ini:"01/06",dt_fim:"08/06",status:"Planejamento",pub:"Fumaça",pa:"App do Gestor",loc:"Pop up"},
+  {pdv:"anota",name:"Novos Entrantes",dt_ini:"01/06",dt_fim:"08/06",status:"Planejamento",pub:"Fumaça",pa:"Kanban e Relatórios",loc:"Header"},
+  {pdv:"anota",name:"Anota TCT",dt_ini:"01/06",dt_fim:"08/06",status:"Planejamento",pub:"TCT",pa:"Kanban e Relatórios",loc:"Header"},
+  {pdv:"anota",name:"Crédito + Maquinona",dt_ini:"01/06",dt_fim:"08/06",status:"Planejamento",pub:"Fumaça/TCT",pa:"Kanban e Relatórios",loc:"Header"},
+  {pdv:"saipos",name:"Saipos TCT",dt_ini:"08/06",dt_fim:"15/06",status:"Planejamento",pub:"TCT",pa:"Tela Vendas por Período",loc:"Header"},
+  {pdv:"saipos",name:"Crédito + Maquinona",dt_ini:"08/06",dt_fim:"15/06",status:"Planejamento",pub:"Fumaça",pa:"Tela Vendas por Período",loc:"Header"},
+  {pdv:"saipos",name:"Engajamento Topo Funil",dt_ini:"15/06",dt_fim:"22/06",status:"Planejamento",pub:"Fumaça",pa:"App do Gestor",loc:"Pop up"},
+  {pdv:"anota",name:"Engajamento Topo Funil",dt_ini:"15/06",dt_fim:"22/06",status:"Planejamento",pub:"Fumaça",pa:"Kanban e Relatórios",loc:"Header"},
+  {pdv:"saipos",name:"Conversão Final Funil",dt_ini:"22/06",dt_fim:"29/06",status:"Planejamento",pub:"Fumaça",pa:"Tela Vendas por Período",loc:"Header"},
+  {pdv:"saipos",name:"Faixas PA",dt_ini:"22/06",dt_fim:"29/06",status:"Planejamento",pub:"Fumaça",pa:"App do Gestor",loc:"Pop up"},
+  {pdv:"anota",name:"Conversão Final Funil",dt_ini:"22/06",dt_fim:"30/06",status:"Planejamento",pub:"Fumaça",pa:"Kanban e Relatórios",loc:"Header"},
+  {pdv:"anota",name:"Faixas PA (Restantes)",dt_ini:"22/06",dt_fim:"30/06",status:"Planejamento",pub:"Fumaça",pa:"Kanban e Relatórios",loc:"Header"}
+];
+
+/* ═══ STATE ═══ */
+let currentPage="resultados";
+let currentPDV="geral";
+let currentMonth="Total";
+let currentGalleryPDV="geral";
+let charts={};
+
+/* ═══ HELPERS ═══ */
+function fmt(n,t,d){if(n==null||isNaN(n))return"—";t=t||"n";d=d||0;if(t==="$"){if(Math.abs(n)>=1e9)return"R$ "+(n/1e9).toFixed(1)+"B";if(Math.abs(n)>=1e6)return"R$ "+(n/1e6).toFixed(1)+"M";if(Math.abs(n)>=1e3)return"R$ "+(n/1e3).toFixed(1)+"K";return"R$ "+n.toFixed(0)}if(t==="%")return(n*100).toFixed(d||1)+"%";if(t==="k"){if(Math.abs(n)>=1e9)return(n/1e9).toFixed(1)+"B";if(Math.abs(n)>=1e6)return(n/1e6).toFixed(1)+"M";if(Math.abs(n)>=1e3)return(n/1e3).toFixed(1)+"K";return n.toFixed(d)}return n.toLocaleString("pt-BR",{maximumFractionDigits:d})}
+function chg(c,p){return(c&&p&&p!==0)?((c-p)/p)*100:null}
+function trendHtml(v){if(v==null||isNaN(v))return"";const pos=v>0;return'<span class="kpi-trend '+(pos?"up":"down")+'">'+(pos?"▲":"▼")+" "+Math.abs(v).toFixed(0)+"%</span>"}
+function destroyCharts(){Object.values(charts).forEach(c=>{if(c)c.destroy()});charts={}}
+function sumMO(k){return MO.reduce((s,m)=>s+(SC[m][k]||0),0)}
+function kpiHtml(label,value,sub,trend,ac){return'<div class="kpi-card"><div class="kpi-accent" style="background:'+ac+'"></div><div class="kpi-inner"><div><div class="kpi-label">'+label+'</div><div class="kpi-value">'+value+'</div>'+(sub?'<div class="kpi-sub">'+sub+'</div>':'')+'</div><div class="kpi-right"><div class="kpi-icon" style="background:'+ac+'22"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="'+ac+'" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg></div>'+trendHtml(trend)+'</div></div></div>'}
+
+function getData(month,pdv){
+  if(pdv==="saipos"||pdv==="anota"){return getPDVData(month,pdv)}
+  if(month==="Total"){
+    return{
+      pa:SC["Mai/26"].pa,pa_val:SC["Mai/26"].pa_val,
+      impactados:TOTAL_IMPACTADOS_UNIQUE, /* CNPJ-unique */
+      visitors:sumMO("visitors"),cliques:sumMO("cliques"),
+      formalizados:sumMO("formalizados"),desembolsos:sumMO("desembolsos"),
+      desemb_val:sumMO("desemb_val"),
+      tkm:sumMO("desembolsos")>0?sumMO("desemb_val")/sumMO("desembolsos"):0,
+      desemb_incr:sumMO("desemb_incr"),desemb_incr_val:sumMO("desemb_incr_val"),
+      tkm_incr:sumMO("desemb_incr")>0?sumMO("desemb_incr_val")/sumMO("desemb_incr"):0,
+      pct_din:SC["Mai/26"].pct_din,pct_ctr:SC["Mai/26"].pct_ctr,
+      s_imp:sumMO("s_imp"),s_int:sumMO("s_int"),s_des:sumMO("s_des"),s_inc:sumMO("s_inc"),
+      a_imp:sumMO("a_imp"),a_con:sumMO("a_con"),a_des:sumMO("a_des"),a_inc:sumMO("a_inc")
+    }
+  }
+  return SC[month]||{pa:null,pa_val:null,impactados:null,visitors:null,cliques:null,formalizados:null,desembolsos:null,desemb_val:null,tkm:null,desemb_incr:null,desemb_incr_val:null,tkm_incr:null,pct_din:null,pct_ctr:null,s_imp:null,s_int:null,s_des:null,s_inc:null,a_imp:null,a_con:null,a_des:null,a_inc:null};
+}
+function getPDVData(month,pdv){
+  const isS=pdv==="saipos";
+  const g=x=>isS?{pa:SC[x].s_pa,pa_val:SC[x].s_pa_val,imp:SC[x].s_imp,int:SC[x].s_int,des:SC[x].s_des,inc:SC[x].s_inc}:{pa:SC[x].a_pa,pa_val:SC[x].a_pa_val,imp:SC[x].a_imp,int:SC[x].a_con,des:SC[x].a_des,inc:SC[x].a_inc};
+  if(month==="Total"){const last=MO[MO.length-1];return{pa:g(last).pa,pa_val:g(last).pa_val,imp:MO.reduce((s,x)=>s+(g(x).imp||0),0),int:MO.reduce((s,x)=>s+(g(x).int||0),0),des:MO.reduce((s,x)=>s+(g(x).des||0),0),inc:MO.reduce((s,x)=>s+(g(x).inc||0),0)}}
+  return g(month);
+}
+
+/* ═══ VERTICAL FUNNEL (box style) ═══ */
+function verticalFunnelHtml(steps,maxVal){
+  const maxW=260; /* px max width for largest box */
+  const minW=70;  /* px min width for smallest box */
+  let html='<div class="funnel-vertical">';
+  steps.forEach((s,i)=>{
+    const ratio=maxVal>0?Math.max(s.value/maxVal,0.08):0.08;
+    const w=Math.round(minW+(maxW-minW)*ratio);
+    const convPct=i>0&&steps[i-1].value>0?((s.value/steps[i-1].value)*100).toFixed(1)+"%":"";
+    const isIncr=s.isIncr||false;
+    const opacity=isIncr?1:Math.max(0.55,1-(i*0.07));
+    const bg=isIncr?"transparent":"rgba(234,29,44,"+opacity+")";
+
+    /* connector arrow between steps */
+    if(i>0){
+      html+='<div class="funnel-connector"><svg width="12" height="14" viewBox="0 0 12 14"><path d="M6 0v9M2 7l4 4 4-4" fill="none" stroke="#D1D5DB" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>';
+    }
+
+    html+='<div class="funnel-step" style="position:relative">';
+    html+='<div class="funnel-box'+(isIncr?" incr":"")+'" style="width:'+w+'px;background:'+bg+'">';
+    html+='<div class="funnel-box-value">'+fmt(s.value,"k")+'</div>';
+    html+='<div class="funnel-box-label">'+s.label+'</div>';
+    html+='</div>';
+    if(convPct){
+      html+='<div class="funnel-box-pct">'+convPct+'</div>';
+    }
+    html+='</div>';
+  });
+  html+='</div>';
+  return html;
+}
+
+function incrBoxHtml(incr,total,month){
+  const pct=total>0?((incr/total)*100).toFixed(0)+"%":"—";
+  /* Calc 3-month rolling avg for reference (change 8) */
+  let refHtml='';
+  if(month&&month!=="Total"){
+    const mi=MO.indexOf(month);
+    if(mi>=3){
+      /* Use 3 months before this one */
+      const prev3=MO.slice(mi-3,mi);
+      const avg3=prev3.reduce((s,m)=>{const d=SC[m].desembolsos||0,i=SC[m].desemb_incr||0;return d>0?s+(i/d):s},0)/3;
+      refHtml='<div style="font-size:10px;color:#6B7280;margin-top:2px">Ref: média 3 meses anteriores = '+(avg3*100).toFixed(0)+'%</div>';
+    } else {
+      /* First 3 months: avg of available months */
+      const avail=MO.slice(0,mi+1);
+      const avgA=avail.reduce((s,m)=>{const d=SC[m].desembolsos||0,i=SC[m].desemb_incr||0;return d>0?s+(i/d):s},0)/avail.length;
+      refHtml='<div style="font-size:10px;color:#6B7280;margin-top:2px">Ref: média Jan–'+month.split('/')[0]+' = '+(avgA*100).toFixed(0)+'%</div>';
+    }
+  } else if(month==="Total"){
+    /* For Total, show the rolling avg that would apply to next month (avg of last 3) */
+    const last3=MO.slice(-3);
+    const avg3=last3.reduce((s,m)=>{const d=SC[m].desembolsos||0,i=SC[m].desemb_incr||0;return d>0?s+(i/d):s},0)/3;
+    refHtml='<div style="font-size:10px;color:#6B7280;margin-top:2px">Ref: média móvel 3 meses (Mar–Mai) = '+(avg3*100).toFixed(0)+'%</div>';
+  }
+  return'<div class="incr-box"><div class="incr-label">Taxa de incrementalidade</div><div class="incr-value">'+pct+'</div><div class="incr-sub">'+fmt(incr)+' de '+fmt(total)+' desembolsos</div>'+refHtml+'</div>'
+}
+
+/* ═══ CAMPAIGN CARDS HTML ═══ */
+function campCardsHtml(items,filterPDV,filterMonth){
+  const monthMap={"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun","07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"};
+  let filtered=filterPDV&&filterPDV!=="geral"?items.filter(c=>c.pdv===filterPDV):items;
+  if(filterMonth&&filterMonth!=="Total"){
+    const fmParts=filterMonth.split("/"); /* e.g. "Mai/26" → ["Mai","26"] */
+    const fmLabel=fmParts[0],fmYear=fmParts[1]; /* "Mai", "26" */
+    filtered=filtered.filter(c=>{
+      if(!c.dt_ini)return false;
+      const parts=c.dt_ini.split("/"); /* e.g. "11/05" → ["11","05"] */
+      if(parts.length<2)return false;
+      const mNum=parts[1]; /* "05" */
+      const mLabel=monthMap[mNum]||"";
+      return mLabel===fmLabel; /* Compare month label, assume same year 26 */
+    });
+  }
+  if(filtered.length===0){return'<div style="text-align:center;padding:24px;color:#9CA3AF;font-size:13px">Nenhuma campanha encontrada para o filtro selecionado</div>'}
+  let html='<div class="camp-grid">';
+  filtered.forEach(c=>{
+    const isAtiva=c.status==="Ativa";
+    const isPlan=c.status==="Planejamento";
+    const cls=isAtiva?"ativa":isPlan?"plan":"done";
+    const statusLbl=isAtiva?"Ativa":isPlan?"Planejamento":"Concluída";
+    const pubStyle=c.pub==="TCT"?"background:#EDE9FE;color:#6D28D9":c.pub.includes("TCT")?"background:#FEF3C7;color:#92400E":"background:#DBEAFE;color:#1E40AF";
+    html+='<div class="camp-card '+cls+'"><div class="camp-card-accent"></div>';
+    html+='<div class="camp-card-header"><span class="camp-card-status '+cls+'">'+statusLbl+'</span><span class="camp-card-pdv '+c.pdv+'">'+c.pdv+'</span></div>';
+    html+='<div class="camp-card-name">'+c.name+'</div>';
+    html+='<div class="camp-card-info">';
+    html+='<div class="camp-card-field"><span class="camp-card-field-label">Ponto de Acesso</span><span class="camp-card-field-value">'+(c.pa||"—")+'</span></div>';
+    html+='<div class="camp-card-field"><span class="camp-card-field-label">Tela / Local</span><span class="camp-card-field-value">'+(c.loc||"—")+'</span></div>';
+    html+='<div class="camp-card-field"><span class="camp-card-field-label">Público</span><span class="camp-card-field-value"><span class="badge" style="'+pubStyle+'">'+c.pub+'</span></span></div>';
+    if(c.ml)html+='<div class="camp-card-field"><span class="camp-card-field-label">Mailing</span><span class="camp-card-field-value">'+fmt(c.ml,"k")+'</span></div>';
+    html+='</div>';
+    html+='<div class="camp-card-date"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> '+c.dt_ini+(c.dt_fim&&c.dt_fim!=="—"?" → "+c.dt_fim:"")+'</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  return html;
+}
+
+/* ═══ BOTTOM FILTERS HTML ═══ */
+function bottomFiltersHtml(){
+  let html='<div class="filters-bar-bottom">';
+  html+='<div class="filter-group"><span class="filter-label">PDV</span><div class="pill-group">';
+  [{id:"geral",l:"Geral"},{id:"saipos",l:"Saipos"},{id:"anota",l:"Anota"}].forEach(p=>{
+    html+='<button class="pill'+(currentPDV===p.id?" active":"")+'" data-pdv="'+p.id+'" onclick="switchPDV(\''+p.id+'\')">'+p.l+'</button>';
+  });
+  html+='</div></div>';
+  html+='<div class="filter-group"><span class="filter-label">Período</span><div class="pill-group">';
+  html+='<button class="pill total-pill'+(currentMonth==="Total"?" active":"")+'" data-month="Total" onclick="switchMonth(\'Total\')">Total</button>';
+  MO.forEach(m=>{
+    html+='<button class="pill'+(m===currentMonth?" active":"")+'" data-month="'+m+'" onclick="switchMonth(\''+m+'\')">'+m+'</button>';
+  });
+  html+='</div></div>';
+  html+='<button class="btn-clear" onclick="clearAllFilters()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Limpar filtros</button>';
+  html+='</div>';
+  return html;
+}
+
+/* ═══ RENDER SCORECARD ═══ */
+function renderScorecard(){
+  const secs=[
+    {group:"PDV",color:"#EA1D2C",rows:[{l:"PA (elegíveis) #",k:"pa",t:"k"},{l:"$",k:"pa_val",t:"$"},{l:"Impactados (elegíveis campanha)",k:"impactados",t:"k"},{l:"Interagiram (Cliques)",k:"cliques",t:"n"},{l:"Formalizaram",k:"formalizados",t:"n"},{l:"Desembolsaram",k:"desembolsos",t:"n"},{l:"$",k:"desemb_val",t:"$"},{l:"TKM",k:"tkm",t:"$"},{l:"Desembolsaram Incremental",k:"desemb_incr",t:"n",hi:true},{l:"$",k:"desemb_incr_val",t:"$",hi:true},{l:"TKM",k:"tkm_incr",t:"$",hi:true},{l:"% dinheiros",k:"pct_din",t:"%"}]},
+    {group:"Saipos",color:"#EA1D2C",rows:[{l:"Saipos — PA (elegíveis) #",k:"s_pa",t:"k"},{l:"Saipos — PA ($)",k:"s_pa_val",t:"$"},{l:"Saipos — Impactados",k:"s_imp",t:"k"},{l:"Saipos — Interagiram",k:"s_int",t:"n"},{l:"Saipos — Desembolsos",k:"s_des",t:"n"},{l:"Saipos — Desembolso Incremental",k:"s_inc",t:"n",hi:true}]},
+    {group:"Anota",color:"#EAB308",rows:[{l:"Anota — PA (elegíveis) #",k:"a_pa",t:"k"},{l:"Anota — PA ($)",k:"a_pa_val",t:"$"},{l:"Anota — Impactados",k:"a_imp",t:"k"},{l:"Anota — Conversão",k:"a_con",t:"n"},{l:"Anota — Desembolsos",k:"a_des",t:"n"},{l:"Anota — Desembolso Incremental",k:"a_inc",t:"n",hi:true}]}
+  ];
+  function fc(v,t){if(v==null)return"—";if(t==="$")return fmt(v,"$");if(t==="%")return fmt(v,"%");if(t==="k")return fmt(v,"k");return typeof v==="number"?Math.round(v).toLocaleString("pt-BR"):v}
+
+  /* Hero banner */
+  let html='<div style="background:linear-gradient(135deg,#1E1B4B 0%,#312E81 50%,#4338CA 100%);border-radius:18px;padding:28px 36px;margin-bottom:20px;color:white;position:relative;overflow:hidden">';
+  html+='<div style="position:absolute;top:-20px;right:-20px;width:140px;height:140px;background:rgba(255,255,255,.04);border-radius:50%"></div>';
+  html+='<div style="position:absolute;bottom:-24px;right:80px;width:90px;height:90px;background:rgba(255,255,255,.03);border-radius:50%"></div>';
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1;flex-wrap:wrap;gap:16px">';
+  html+='<div><div style="display:flex;align-items:center;gap:12px;margin-bottom:6px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><span style="font-size:20px;font-weight:800">Scorecard</span></div>';
+  html+='<p style="font-size:12px;opacity:.75;max-width:400px">Tabela mensal completa — todas as métricas consolidadas</p></div>';
+  html+='<button onclick="exportScorecard()" style="display:flex;align-items:center;gap:6px;padding:8px 18px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:8px;color:white;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;backdrop-filter:blur(4px)" onmouseover="this.style.background=\'rgba(255,255,255,.25)\'" onmouseout="this.style.background=\'rgba(255,255,255,.15)\'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Exportar Excel</button>';
+  html+='</div></div>';
+  html+='<div class="card" style="padding:16px 20px"><div class="card-title" style="margin-bottom:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EA1D2C" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><h3 style="font-size:14px">Scorecard Mensal</h3></div>';
+  html+='<div style="overflow-x:auto"><table class="sc-tbl"><thead><tr><th></th><th class="etapa">Etapa</th>';
+  MO5.forEach(m=>{html+='<th class="month">'+m+'</th>'});
+  html+='</tr></thead><tbody>';
+  secs.forEach(sec=>{sec.rows.forEach((row,ri)=>{const cls=(row.hi?"hi ":"")+(ri%2===0?"even":"");html+='<tr class="'+cls+'">';if(ri===0)html+='<td class="sc-group-cell" rowspan="'+sec.rows.length+'" style="color:'+sec.color+';border-right-color:'+sec.color+';background:'+sec.color+'08">'+sec.group+'</td>';html+='<td style="'+(row.hi?"font-weight:600;color:#065F46":"color:#374151")+'">'+row.l+'</td>';MO5.forEach(m=>{const v=SC[m]&&SC[m][row.k];const isNull=v==null;html+='<td class="val'+(isNull?" null":"")+'" style="'+(row.hi&&!isNull?"font-weight:600;color:#065F46":"")+'">'+fc(v,row.t)+'</td>'});html+='</tr>'})});
+  html+='</tbody></table></div></div>';
+  document.getElementById("page-scorecard").innerHTML=html;
+}
+
+/* ═══ RENDER RESULTADOS ═══ */
+function renderResultados(){
+  const m=currentMonth,pdv=currentPDV,isTotal=m==="Total";
+  const d=getData(m,pdv);
+  const pi=isTotal?-1:MO.indexOf(m);
+  const isPDV=pdv==="saipos"||pdv==="anota";
+  const isS=pdv==="saipos";
+  const lbl=isPDV?(isS?"Saipos":"Anota"):"Geral";
+  const label=isTotal?"Acumulado Jan–Mai/26":m;
+  const prev=isTotal?null:(pi>0?(isPDV?getPDVData(MO[pi-1],pdv):SC[MO[pi-1]]):null);
+
+  let html='<div class="page-header"><h1 class="page-title">Resultados Campanhas: Jornada de Contratação no PDV</h1><p class="page-subtitle">'+label+(isPDV?" — "+lbl:"")+'</p></div>';
+
+  // PDV header for saipos/anota — always shows accumulated totals
+  if(isPDV){
+    const g=x=>isS?{des:SC[x].s_des,inc:SC[x].s_inc}:{des:SC[x].a_des,inc:SC[x].a_inc};
+    const totD=MO.reduce((s,x)=>s+(g(x).des||0),0),totI=MO.reduce((s,x)=>s+(g(x).inc||0),0);
+    const camps=CAMPS.filter(c=>c.pdv===pdv);
+    html+='<div class="pdv-header '+pdv+'"><div style="display:flex;align-items:center;gap:12px"><div class="pdv-avatar">'+(isS?"S":"A")+'</div><div><div style="font-size:18px;font-weight:700">'+lbl+'</div><div style="font-size:12px;opacity:.8">'+camps.length+' campanhas</div></div></div>';
+    html+='<div class="pdv-stats"><div class="pdv-stat"><div class="pdv-stat-label">Desembolsos</div><div class="pdv-stat-value">'+totD+'</div></div><div class="pdv-stat"><div class="pdv-stat-label">Incrementais</div><div class="pdv-stat-value" style="color:#34D399">'+totI+'</div></div><div class="pdv-stat"><div class="pdv-stat-label">% Incr.</div><div class="pdv-stat-value" style="color:#FCD34D">'+(totD>0?((totI/totD)*100).toFixed(0)+"%":"0%")+'</div></div></div></div>';
+  }
+
+  // KPIs
+  if(isPDV){
+    html+='<div class="kpi-grid" style="grid-template-columns:repeat(5,1fr)">';
+    html+=kpiHtml("Base Elegível (PA)",fmt(d.pa,"k"),fmt(d.pa_val,"$"),isTotal?null:chg(d.pa,prev&&prev.pa),"#8B5CF6");
+    html+=kpiHtml("Impactados",fmt(d.imp,"k"),null,isTotal?null:chg(d.imp,prev&&prev.imp),"#F97316");
+    html+=kpiHtml(isS?"Interagiram":"Conversão",fmt(d.int),null,isTotal?null:chg(d.int,prev&&prev.int),"#EAB308");
+    html+=kpiHtml("Desembolsos",fmt(d.des),null,isTotal?null:chg(d.des,prev&&prev.des),"#3B82F6");
+    html+=kpiHtml("Incrementais",fmt(d.inc),null,isTotal?null:chg(d.inc,prev&&prev.inc),"#10B981");
+    html+='</div>';
+  } else {
+    html+='<div class="kpi-grid" style="grid-template-columns:repeat(5,1fr)">';
+    html+=kpiHtml("Formalizados",fmt(d.formalizados),null,isTotal?null:chg(d.formalizados,prev&&prev.formalizados),"#F97316");
+    html+=kpiHtml("Desembolsos (#)",fmt(d.desembolsos),null,isTotal?null:chg(d.desembolsos,prev&&prev.desembolsos),"#3B82F6");
+    html+=kpiHtml("Desembolso (R$)",fmt(d.desemb_val,"$"),null,isTotal?null:chg(d.desemb_val,prev&&prev.desemb_val),"#6366F1");
+    html+=kpiHtml("Incr. (#)",fmt(d.desemb_incr),null,isTotal?null:chg(d.desemb_incr,prev&&prev.desemb_incr),"#10B981");
+    html+=kpiHtml("Incr. (R$)",fmt(d.desemb_incr_val,"$"),null,isTotal?null:chg(d.desemb_incr_val,prev&&prev.desemb_incr_val),"#059669");
+    html+='</div>';
+  }
+
+  // Funnel + Chart
+  html+='<div class="grid-1-1h">';
+  if(isPDV){
+    const fl=[{label:"Base Elegível (PA)",value:d.pa},{label:"Impactados",value:d.imp},{label:isS?"Interagiram":"Conversão",value:d.int},{label:"Desembolsos",value:d.des},{label:"Incrementais",value:d.inc,isIncr:true}];
+    html+='<div class="card"><div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EA1D2C" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg><h3>Funil '+lbl+' — '+label+'</h3></div>';
+    html+=verticalFunnelHtml(fl,d.pa||d.imp||1);
+    html+=incrBoxHtml(d.inc,d.des,m);
+    html+='</div>';
+  } else {
+    const fl=[{label:"Base Elegível (PA)",value:d.pa},{label:"Impactados",value:d.impactados},{label:"Visitantes",value:d.visitors||0},{label:"Cliques",value:d.cliques},{label:"Formalizações",value:d.formalizados},{label:"Desembolso",value:d.desembolsos},{label:"Desemb. Incremental",value:d.desemb_incr,isIncr:true}];
+    html+='<div class="card"><div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EA1D2C" stroke-width="2"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg><h3>Funil de Conversão — '+label+'</h3></div>';
+    html+=verticalFunnelHtml(fl,d.pa);
+    html+=incrBoxHtml(d.desemb_incr,d.desembolsos,m);
+    html+='</div>';
+  }
+  html+='<div class="grid-right-stack">';
+  html+='<div class="card"><div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EA1D2C" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg><h3>Evolução Mensal</h3></div><div class="chart-wrap"><canvas id="chartMain"></canvas></div></div>';
+  html+='<div class="card"><div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg><h3>Valor Incremental por Mês</h3></div><div class="chart-wrap chart-wrap-sm"><canvas id="chartIncrVal"></canvas></div></div>';
+  html+='</div>';
+  html+='</div>';
+
+  // Conv + Split for Geral
+  if(!isPDV){
+    html+='<div class="grid-2">';
+    html+='<div class="card"><div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EA1D2C" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><h3>Taxas de Conversão (%)</h3></div><div class="chart-wrap chart-wrap-sm"><canvas id="chartConv"></canvas></div></div>';
+    html+='<div class="card"><div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EA1D2C" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg><h3>Desembolsos por PDV</h3></div><div class="chart-wrap chart-wrap-sm"><canvas id="chartSplit"></canvas></div></div>';
+    html+='</div>';
+  }
+
+  // Insights — respect PDV + month filters
+  html+='<div class="card" style="margin-bottom:20px"><div class="card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#EA1D2C" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><h3>Destaques</h3></div><div class="insights-grid">';
+  if(isPDV){
+    /* PDV-specific insights */
+    const gPDV=x=>isS?{des:SC[x].s_des,inc:SC[x].s_inc}:{des:SC[x].a_des,inc:SC[x].a_inc};
+    const bestMp=MO.reduce((b,x)=>(gPDV(x).inc||0)>(gPDV(b).inc||0)?x:b,MO[0]);
+    const bestPd=gPDV(bestMp);
+    const totDp=MO.reduce((s,x)=>s+(gPDV(x).des||0),0);
+    const totIp=MO.reduce((s,x)=>s+(gPDV(x).inc||0),0);
+    const pctIp=totDp>0?((totIp/totDp)*100).toFixed(0)+"%":"—";
+    const totImpp=MO.reduce((s,x)=>s+((isS?SC[x].s_imp:SC[x].a_imp)||0),0);
+    const cvrP=totImpp>0?((totDp/totImpp)*100).toFixed(2)+"%":"—";
+    html+='<div class="insight-card insight-green"><div class="insight-label">Melhor mês incrementais</div><div class="insight-value">'+bestMp+'</div><div class="insight-sub">'+(bestPd.inc||0)+' incr.</div></div>';
+    html+='<div class="insight-card insight-blue"><div class="insight-label">Taxa de incrementalidade</div><div class="insight-value">'+pctIp+'</div><div class="insight-sub">'+totIp+' de '+totDp+' desembolsos</div></div>';
+    html+='<div class="insight-card insight-pink"><div class="insight-label">Desembolsos acumulados</div><div class="insight-value">'+totDp+'</div><div class="insight-sub">'+lbl+'</div></div>';
+    html+='<div class="insight-card insight-amber"><div class="insight-label">CVR Impactados → Desemb.</div><div class="insight-value">'+cvrP+'</div><div class="insight-sub">'+totDp+' de '+fmt(totImpp,"k")+' impactados</div></div>';
+  } else {
+    /* Geral insights */
+    const bestM=MO.reduce((b,x)=>(SC[x].desemb_incr||0)>(SC[b].desemb_incr||0)?x:b,MO[0]);
+    const sT=sumMO("s_des"),aT=sumMO("a_des");
+    const ldr=sT>aT?"Saipos":"Anota",ldrV=Math.max(sT,aT),oV=Math.min(sT,aT);
+    const totalDesemb=sumMO("desembolsos"),totalIncr=sumMO("desemb_incr");
+    const pctIncr=totalDesemb>0?((totalIncr/totalDesemb)*100).toFixed(0)+"%":"—";
+    html+='<div class="insight-card insight-green"><div class="insight-label">Melhor mês incrementais</div><div class="insight-value">'+bestM+'</div><div class="insight-sub">'+SC[bestM].desemb_incr+' incr. — '+fmt(SC[bestM].desemb_incr_val,"$")+'</div></div>';
+    html+='<div class="insight-card insight-blue"><div class="insight-label">Taxa de incrementalidade</div><div class="insight-value">'+pctIncr+'</div><div class="insight-sub">'+totalIncr+' de '+totalDesemb+' desembolsos</div></div>';
+    html+='<div class="insight-card insight-pink"><div class="insight-label">PDV líder acumulado</div><div class="insight-value">'+ldr+'</div><div class="insight-sub">'+ldrV+' desemb. vs '+oV+'</div></div>';
+    html+='<div class="insight-card insight-amber"><div class="insight-label">% Contratos (último)</div><div class="insight-value">'+fmt(SC["Mai/26"].pct_ctr,"%")+'</div><div class="insight-sub">Mai/26</div></div>';
+  }
+  html+='</div></div>';
+
+  // Calendar cards (filters are sticky at top)
+  html+='<div class="card"><div class="card-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#EA1D2C" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><h3>Próximas Campanhas</h3></div>';
+  html+=campCardsHtml(CAL,currentPDV,currentMonth);
+  html+='</div>';
+
+  document.getElementById("page-resultados").innerHTML=html;
+
+  // Charts — react to month AND PDV filters
+  setTimeout(()=>{
+    /* Determine which months to show in charts */
+    const chartMO=isTotal?MO:[m]; /* single month if filtered, all if Total */
+    const cOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{usePointStyle:true,padding:14,font:{size:11}}}},scales:{y:{beginAtZero:true,grid:{color:"#F3F4F6"},ticks:{font:{size:11},color:"#9CA3AF"}},x:{grid:{display:false},ticks:{font:{size:12},color:"#9CA3AF"}}}};
+
+    if(isPDV){
+      const g=x=>isS?{pa:SC[x].s_pa,imp:SC[x].s_imp,int:SC[x].s_int,des:SC[x].s_des,inc:SC[x].s_inc}:{pa:SC[x].a_pa,imp:SC[x].a_imp,int:SC[x].a_con,des:SC[x].a_des,inc:SC[x].a_inc};
+      const md=chartMO.map(x=>({name:x,...g(x)})).filter(x=>x.pa!=null||x.imp!=null);
+      if(md.length>0){
+        charts.main=new Chart(document.getElementById("chartMain"),{type:"bar",data:{labels:md.map(x=>x.name),datasets:[{label:"Desembolsos",data:md.map(x=>x.des||0),backgroundColor:"#3B82F6",borderRadius:4,barPercentage:.35,order:2},{label:"Incrementais",data:md.map(x=>x.inc||0),backgroundColor:"#10B981",borderRadius:4,barPercentage:.35,order:2},{label:"Base Elegível",data:md.map(x=>x.pa||0),type:"line",borderColor:"#8B5CF6",backgroundColor:"#8B5CF6",pointRadius:5,borderWidth:2,tension:.3,yAxisID:"y1",order:1},{label:"Impactados",data:md.map(x=>x.imp||0),type:"line",borderColor:"#EA1D2C",backgroundColor:"#EA1D2C",pointRadius:5,borderWidth:2,tension:.3,yAxisID:"y1",order:1,borderDash:[5,5]}]},options:{...cOpts,scales:{...cOpts.scales,y1:{position:"right",beginAtZero:true,grid:{display:false},ticks:{font:{size:11},color:"#9CA3AF"}}}}});
+      }
+    } else {
+      /* Geral charts — filter by selected months */
+      const gLabels=chartMO;
+      charts.main=new Chart(document.getElementById("chartMain"),{type:"bar",data:{labels:gLabels,datasets:[{label:"Desembolsos",data:gLabels.map(x=>SC[x].desembolsos||0),backgroundColor:"#3B82F6",borderRadius:4,barPercentage:.35,order:2},{label:"Incrementais",data:gLabels.map(x=>SC[x].desemb_incr||0),backgroundColor:"#10B981",borderRadius:4,barPercentage:.35,order:2},{label:"Valor (R$)",data:gLabels.map(x=>SC[x].desemb_val||0),type:"line",borderColor:"#EA1D2C",backgroundColor:"#EA1D2C",pointRadius:5,borderWidth:2.5,tension:.3,yAxisID:"y1",order:1}]},options:{...cOpts,scales:{...cOpts.scales,y1:{position:"right",beginAtZero:true,grid:{display:false},ticks:{font:{size:11},color:"#9CA3AF",callback:v=>{if(v>=1e6)return"R$"+(v/1e6).toFixed(1)+"M";if(v>=1e3)return"R$"+(v/1e3).toFixed(0)+"K";return"R$"+v}}}}}});
+
+      charts.incrVal=new Chart(document.getElementById("chartIncrVal"),{type:"bar",data:{labels:gLabels,datasets:[{label:"Desemb. Incr. (R$)",data:gLabels.map(x=>SC[x].desemb_incr_val||0),backgroundColor:"#10B981",borderRadius:4,barPercentage:.4,order:2},{label:"TKM Incremental",data:gLabels.map(x=>SC[x].tkm_incr||0),type:"line",borderColor:"#8B5CF6",backgroundColor:"#8B5CF6",pointRadius:5,borderWidth:2,tension:.3,yAxisID:"y1",order:1}]},options:{...cOpts,scales:{...cOpts.scales,y1:{position:"right",beginAtZero:true,grid:{display:false},ticks:{font:{size:11},color:"#9CA3AF",callback:v=>{if(v>=1e6)return"R$"+(v/1e6).toFixed(0)+"M";if(v>=1e3)return"R$"+(v/1e3).toFixed(0)+"K";return"R$"+v}}}}}});
+
+      charts.conv=new Chart(document.getElementById("chartConv"),{type:"line",data:{labels:gLabels,datasets:[{label:"% Dinheiros",data:gLabels.map(x=>SC[x].pct_din?SC[x].pct_din*100:0),borderColor:"#10B981",backgroundColor:"rgba(16,185,129,.1)",fill:true,pointRadius:5,borderWidth:2.5,tension:.3}]},options:{...cOpts,scales:{...cOpts.scales,y:{beginAtZero:true,grid:{color:"#F3F4F6"},ticks:{font:{size:11},color:"#9CA3AF",callback:v=>v.toFixed(1)+"%"}}}}});
+
+      const splitLabels=gLabels.filter(x=>SC[x].s_des!=null&&SC[x].a_des!=null);
+      if(splitLabels.length>0){
+        charts.split=new Chart(document.getElementById("chartSplit"),{type:"bar",data:{labels:splitLabels,datasets:[{label:"Saipos",data:splitLabels.map(x=>SC[x].s_des||0),backgroundColor:"#EA1D2C",barPercentage:.5},{label:"Anota",data:splitLabels.map(x=>SC[x].a_des||0),backgroundColor:"#FBBF24",borderRadius:{topLeft:4,topRight:4},barPercentage:.5}]},options:{...cOpts,scales:{y:{stacked:true,beginAtZero:true,grid:{color:"#F3F4F6"},ticks:{font:{size:11},color:"#9CA3AF"}},x:{stacked:true,grid:{display:false},ticks:{font:{size:12},color:"#9CA3AF"}}}}});
+      }
+    }
+  },50);
+}
+
+/* ═══ RENDER COMUNICAÇÕES (gallery with images) ═══ */
+function renderComunicacoes(){
+  /* Filter by PDV */
+  const filterPDV=currentGalleryPDV;
+  const allCamps=filterPDV&&filterPDV!=="geral"?CAMPS.filter(c=>c.pdv===filterPDV):CAMPS;
+  function campDate(c){const p=c.dt.split("–")[0].split("/");const mo={"Jan/26":1,"Fev/26":2,"Mar/26":3,"Abr/26":4,"Mai/26":5,"Jun/26":6};return(mo[c.mo]||0)*100+(parseInt(p[0])||0)}
+  const withImg=allCamps.filter(c=>c.img&&c.img.length>0).sort((a,b)=>campDate(b)-campDate(a));
+
+  /* Hero banner — no numbers, clean */
+  let html='<div style="background:linear-gradient(135deg,#7F1D1D 0%,#EA1D2C 50%,#F97316 100%);border-radius:18px;padding:32px 36px;margin-bottom:24px;color:white;position:relative;overflow:hidden">';
+  html+='<div style="position:absolute;top:-20px;right:-20px;width:160px;height:160px;background:rgba(255,255,255,.06);border-radius:50%"></div>';
+  html+='<div style="position:absolute;bottom:-30px;right:60px;width:100px;height:100px;background:rgba(255,255,255,.04);border-radius:50%"></div>';
+  html+='<div style="position:relative;z-index:1">';
+  html+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:8px"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span style="font-size:22px;font-weight:800">Comunicações</span></div>';
+  html+='<p style="font-size:13px;opacity:.85;max-width:500px">Galeria visual de todas as campanhas de crédito realizadas no PDV</p>';
+  html+='<p style="font-size:11px;opacity:.6;margin-top:6px;font-style:italic">Clique na imagem de cada campanha para ampliar</p>';
+  html+='</div></div>';
+
+  // PDV filter for gallery
+  html+='<div class="gallery-filters" style="margin-bottom:20px">';
+  html+='<span class="filter-label">PDV</span><div class="pill-group">';
+  [{id:"geral",l:"Geral"},{id:"saipos",l:"Saipos"},{id:"anota",l:"Anota"}].forEach(p=>{
+    html+='<button class="pill'+(currentGalleryPDV===p.id?" active":"")+'" onclick="switchGalleryPDV(\''+p.id+'\')">'+p.l+'</button>';
+  });
+  html+='</div></div>';
+
+  // Gallery grid
+  if(withImg.length>0){
+    html+='<div class="gallery-grid">';
+    withImg.forEach(c=>{
+      const name=CAMP_NAMES[c.n]||c.n;
+      const imgFile=c.img[0];
+      html+='<div class="gallery-item">';
+      if(c.img.length===1){
+        html+='<div class="gallery-img-wrap"><img src="campaign-images/'+imgFile+'" alt="'+name+'" loading="lazy" onclick="openLightbox(this.src)"></div>';
+      } else {
+        html+='<div class="gallery-img-wrap" style="display:flex;gap:4px;overflow-x:auto">';
+        c.img.forEach(im=>{html+='<img src="campaign-images/'+im+'" alt="'+name+'" loading="lazy" style="max-height:180px;border-radius:8px;cursor:pointer;flex-shrink:0" onclick="openLightbox(this.src)">';});
+        html+='</div>';
+      }
+      html+='<div class="gallery-info">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span class="camp-card-pdv '+c.pdv+'">'+c.pdv+'</span><span style="font-size:10px;color:#9CA3AF;font-weight:500">'+c.mo+'</span></div>';
+      html+='<div class="gallery-camp-name">'+name+'</div>';
+      html+='<div class="gallery-meta">';
+      html+='<div class="gallery-meta-item"><span class="gallery-meta-label">Ponto de Acesso</span><span class="gallery-meta-value">'+c.pa+'</span></div>';
+      html+='<div class="gallery-meta-item"><span class="gallery-meta-label">Tela</span><span class="gallery-meta-value">'+c.loc+'</span></div>';
+      html+='<div class="gallery-meta-item"><span class="gallery-meta-label">Período</span><span class="gallery-meta-value">'+c.dt+'</span></div>';
+      html+='<div class="gallery-meta-item"><span class="gallery-meta-label">Mailing</span><span class="gallery-meta-value">'+fmt(c.ml,"k")+'</span></div>';
+      html+='</div></div></div>';
+    });
+    html+='</div>';
+  } else {
+    html+='<div style="text-align:center;padding:40px;color:#9CA3AF;font-size:13px">Nenhuma campanha com imagem encontrada para o filtro selecionado</div>';
+  }
+
+
+
+  document.getElementById("page-comunicacoes").innerHTML=html;
+}
+
+function switchGalleryPDV(p){currentGalleryPDV=p;renderComunicacoes()}
+
+/* ═══ RENDER AGENTE (chat) ═══ */
+let chatMessages=[{role:"bot",text:"Olá! Sou o agente de crédito do Salão. Posso te ajudar com dúvidas sobre o dashboard, métricas, campanhas e incrementalidade. O que gostaria de saber?"}];
+
+function renderAgente(){
+  let html='<div style="background:linear-gradient(135deg,#059669 0%,#10B981 50%,#34D399 100%);border-radius:18px;padding:28px 36px;margin-bottom:20px;color:white;position:relative;overflow:hidden">';
+  html+='<div style="position:absolute;top:-20px;right:-20px;width:140px;height:140px;background:rgba(255,255,255,.05);border-radius:50%"></div>';
+  html+='<div style="position:relative;z-index:1;display:flex;align-items:center;gap:14px">';
+  html+='<div style="width:64px;height:64px;flex-shrink:0"><svg viewBox="0 0 120 120" width="64" height="64"><defs><linearGradient id="bagGr" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#EA1D2C"/><stop offset="100%" stop-color="#B91C1C"/></linearGradient></defs><rect x="20" y="25" width="80" height="70" rx="12" fill="#22C55E"/><rect x="20" y="25" width="80" height="14" rx="8" fill="#16A34A"/><rect x="35" y="10" width="50" height="30" rx="10" fill="url(#bagGr)"/><rect x="50" y="5" width="20" height="12" rx="6" fill="none" stroke="#EA1D2C" stroke-width="4"/><text x="60" y="30" text-anchor="middle" font-size="11" font-weight="800" fill="white">iFood</text><circle cx="43" cy="58" r="7" fill="white"/><circle cx="43" cy="57" r="3.5" fill="#1E293B"/><circle cx="45" cy="55.5" r="1.2" fill="white"/><circle cx="77" cy="58" r="7" fill="white"/><circle cx="77" cy="57" r="3.5" fill="#1E293B"/><circle cx="79" cy="55.5" r="1.2" fill="white"/><ellipse cx="60" cy="66" rx="4" ry="2.5" fill="#1E293B"/><path d="M44 74 Q60 84 76 74" fill="none" stroke="#1E293B" stroke-width="2.5" stroke-linecap="round"/><circle cx="33" cy="67" r="5" fill="#FCA5A5" opacity=".5"/><circle cx="87" cy="67" r="5" fill="#FCA5A5" opacity=".5"/><animateTransform attributeName="transform" type="rotate" values="-2 60 60;2 60 60;-2 60 60" dur="2s" repeatCount="indefinite"/></svg></div>';
+  html+='<div><div style="font-size:20px;font-weight:800">Agente Crédito</div><p style="font-size:12px;opacity:.8">Seu assistente inteligente de métricas</p></div>';
+  html+='</div></div>';
+
+  html+='<div class="card" style="padding:60px 32px;text-align:center">';
+  html+='<div style="margin-bottom:20px"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>';
+  html+='<div style="font-size:22px;font-weight:800;color:#374151;margin-bottom:8px">Em construção</div>';
+  html+='<p style="font-size:14px;color:#9CA3AF;max-width:400px;margin:0 auto">Estamos preparando o agente inteligente para responder suas dúvidas sobre campanhas, métricas e incrementalidade. Em breve!</p>';
+  html+='</div>';
+
+  document.getElementById("page-agente").innerHTML=html;
+}
+
+function detectMonth(q){
+  const ql=q.toLowerCase();
+  const mMap={"janeiro":"Jan/26","jan":"Jan/26","fevereiro":"Fev/26","fev":"Fev/26","março":"Mar/26","marco":"Mar/26","mar":"Mar/26","abril":"Abr/26","abr":"Abr/26","maio":"Mai/26","mai":"Mai/26","junho":"Jun/26","jun":"Jun/26"};
+  for(const[k,v] of Object.entries(mMap)){if(ql.includes(k))return v}
+  return null;
+}
+function getMonthData(m){
+  if(!m||!SC[m])return null;
+  return SC[m];
+}
+function hasData(d,field){return d && d[field]!=null && d[field]!==0}
+function monthLabel(m){return m||"Total"}
+
+function sendChat(){
+  const input=document.getElementById("chatInput");
+  const q=(input.value||"").trim();
+  if(!q)return;
+  chatMessages.push({role:"user",text:q});
+  input.value="";
+
+  const ql=q.toLowerCase();
+  let resp="";
+  const detM=detectMonth(ql);
+  const isMaiJun=detM==="Jun/26";
+
+  /* Detect PDV filter */
+  let detPDV="geral";
+  if(ql.includes("saipos"))detPDV="saipos";
+  else if(ql.includes("anota"))detPDV="anota";
+
+  /* Helper: get correct data based on detected month */
+  function getD(){
+    if(detM){
+      if(detPDV!=="geral")return getPDVData(detM,detPDV);
+      return getMonthData(detM);
+    }
+    if(detPDV!=="geral")return getPDVData("Total",detPDV);
+    return getData("Total","geral");
+  }
+
+  function periodLabel(){
+    if(detM)return detM;
+    return "acumulado Jan–Mai/26";
+  }
+
+  /* ═ GREETING ═ */
+  if(ql.match(/^(oi|olá|ola|hey|bom dia|boa tarde|boa noite|e ai|eai)/)){
+    resp="Olá! Sou o Agente Crédito do Salão. Posso te ajudar com métricas de <b>desembolsos</b>, <b>formalizados</b>, <b>incrementalidade</b>, <b>funil</b>, <b>campanhas</b>, <b>Saipos vs Anota</b>, <b>PA/elegíveis</b> e <b>TKM</b>. Pode perguntar por mês específico também!";
+
+  /* ═ INCREMENTALIDADE ═ */
+  } else if(ql.includes("incrementalidade")||ql.includes("incremental")){
+    if(isMaiJun){
+      resp="Ainda não temos dados de incrementalidade para <b>"+detM+"</b>. Os dados disponíveis vão de Jan/26 a Abr/26.";
+    } else {
+      const d=getD();
+      if(detM && detPDV==="geral"){
+        const md=getMonthData(detM);
+        if(!md||!hasData(md,"desemb_incr")){
+          resp="Não há dados de incrementalidade disponíveis para <b>"+detM+"</b>.";
+        } else {
+          const pct=md.desembolsos>0?((md.desemb_incr/md.desembolsos)*100).toFixed(0):"0";
+          resp="A taxa de incrementalidade em <b>"+detM+"</b> é de <b>"+pct+"%</b>. Foram "+md.desemb_incr+" desembolsos incrementais de "+md.desembolsos+" totais, equivalendo a <b>"+fmt(md.desemb_incr_val,"$")+"</b> em valor incremental.";
+        }
+      } else if(detPDV!=="geral"){
+        const pd=getD();
+        if(!pd||pd.des==null||pd.des===0){
+          resp="Não há dados de desembolso disponíveis para <b>"+(detPDV==="saipos"?"Saipos":"Anota")+"</b> em <b>"+periodLabel()+"</b>.";
+        } else {
+          const pct=pd.des>0?((pd.inc/pd.des)*100).toFixed(0):"0";
+          resp="A incrementalidade de <b>"+(detPDV==="saipos"?"Saipos":"Anota")+"</b> ("+periodLabel()+") é de <b>"+pct+"%</b> ("+pd.inc+" incrementais de "+pd.des+" desembolsos).";
+        }
+      } else {
+        const totalD=sumMO("desembolsos"),totalI=sumMO("desemb_incr");
+        const pct=totalD>0?((totalI/totalD)*100).toFixed(0):"0";
+        resp="A taxa de incrementalidade acumulada (Jan–Mai/26) é de <b>"+pct+"%</b>. Isso significa que <b>"+totalI+" dos "+totalD+"</b> desembolsos foram diretamente atribuídos às campanhas.";
+      }
+    }
+
+  /* ═ VALOR DESEMBOLSO (R$) ═ */
+  } else if(ql.includes("valor")&&(ql.includes("desembolso")||ql.includes("reais")||ql.includes("r$")||ql.includes("dinheiro"))){
+    if(isMaiJun){
+      resp="Ainda não temos dados de valor de desembolso para <b>"+detM+"</b>.";
+    } else if(detM){
+      const md=getMonthData(detM);
+      if(!md||!hasData(md,"desemb_val")){
+        resp="Não há dados de valor de desembolso para <b>"+detM+"</b>.";
+      } else {
+        resp="Em <b>"+detM+"</b>, o valor de desembolso total foi de <b>"+fmt(md.desemb_val,"$")+"</b>. O valor incremental foi de <b>"+fmt(md.desemb_incr_val,"$")+"</b>.";
+      }
+    } else {
+      resp="O valor de desembolso total acumulado (Jan–Mai/26) é de <b>"+fmt(sumMO("desemb_val"),"$")+"</b>. O valor incremental é de <b>"+fmt(sumMO("desemb_incr_val"),"$")+"</b>.<br>Por mês: "+MO.map(x=>x+": "+fmt(SC[x].desemb_val,"$")).join(", ")+".";
+    }
+
+  /* ═ FORMALIZADOS ═ */
+  } else if(ql.includes("formaliz")){
+    if(isMaiJun){
+      const md=getMonthData(detM);
+      if(!md||!hasData(md,"formalizados")){
+        resp="Ainda não temos dados de formalizados para <b>"+detM+"</b>. Os dados consolidados vão de Jan/26 a Abr/26.";
+      } else {
+        resp="Em <b>"+detM+"</b> temos <b>"+md.formalizados+" formalizados</b> (CNPJs únicos).";
+      }
+    } else if(detM){
+      const md=getMonthData(detM);
+      if(!md||!hasData(md,"formalizados")){
+        resp="Não há dados de formalizados para <b>"+detM+"</b>.";
+      } else {
+        resp="Em <b>"+detM+"</b> tivemos <b>"+md.formalizados+" formalizados</b> (CNPJs únicos).";
+      }
+    } else {
+      const totalF=sumMO("formalizados");
+      resp="O total de formalizados acumulado (Jan–Mai/26) é de <b>"+totalF+" CNPJs únicos</b>.<br>Por mês: "+MO.map(x=>x+": "+(SC[x].formalizados||0)).join(", ")+".";
+    }
+
+  /* ═ DESEMBOLSO (quantidade) ═ */
+  } else if(ql.includes("desembolso")||ql.includes("desembolsaram")||ql.includes("desembolsados")){
+    if(isMaiJun){
+      const md=getMonthData(detM);
+      if(!md||!hasData(md,"desembolsos")){
+        resp="Ainda não temos dados consolidados de desembolso para <b>"+detM+"</b>.";
+      } else {
+        resp="Em <b>"+detM+"</b> temos <b>"+md.desembolsos+" desembolso(s)</b> registrado(s) até agora.";
+      }
+    } else if(detM){
+      const md=getMonthData(detM);
+      if(!md||!hasData(md,"desembolsos")){
+        resp="Não há dados de desembolso disponíveis para <b>"+detM+"</b>.";
+      } else {
+        resp="Em <b>"+detM+"</b> tivemos <b>"+md.desembolsos+" desembolsos</b> (CNPJs únicos). Desses, <b>"+md.desemb_incr+" são incrementais</b>.";
+      }
+    } else if(detPDV!=="geral"){
+      const pd=getD();
+      resp="<b>"+(detPDV==="saipos"?"Saipos":"Anota")+"</b> ("+periodLabel()+"): <b>"+pd.des+" desembolsos</b>, <b>"+pd.inc+" incrementais</b>.";
+    } else {
+      const totalD=sumMO("desembolsos"),totalI=sumMO("desemb_incr");
+      resp="O total de desembolsos acumulado (Jan–Mai/26) é de <b>"+totalD+" CNPJs únicos</b>. Desses, <b>"+totalI+" são incrementais</b>.<br>Por mês: "+MO.map(x=>x+": "+SC[x].desembolsos).join(", ")+".";
+    }
+
+  /* ═ MELHOR MÊS/CAMPANHA ═ */
+  } else if(ql.includes("melhor mes")||ql.includes("melhor mês")||ql.includes("melhor campanha")||ql.includes("pior")){
+    const isWorst=ql.includes("pior");
+    const bestM=MO.reduce((b,x)=>{
+      const cond=isWorst?(SC[x].desemb_incr||0)<(SC[b].desemb_incr||Infinity):(SC[x].desemb_incr||0)>(SC[b].desemb_incr||0);
+      return cond?x:b;
+    },MO[0]);
+    resp="O "+(isWorst?"mês com menos":"melhor mês em")+" desembolsos incrementais foi <b>"+bestM+"</b>, com "+SC[bestM].desemb_incr+" desembolsos incrementais e "+fmt(SC[bestM].desemb_incr_val,"$")+" em valor.";
+
+  /* ═ SAIPOS vs ANOTA ═ */
+  } else if(detPDV!=="geral"){
+    if(isMaiJun){
+      const md=getMonthData(detM);
+      if(detPDV==="saipos"){
+        if(!md||md.s_des==null) resp="Não há dados de Saipos disponíveis para <b>"+detM+"</b>.";
+        else resp="<b>Saipos</b> em <b>"+detM+"</b>: "+md.s_des+" desembolso(s), "+(md.s_inc||0)+" incremental(is).";
+      } else {
+        if(!md||md.a_des==null) resp="Não há dados de Anota disponíveis para <b>"+detM+"</b>.";
+        else resp="<b>Anota</b> em <b>"+detM+"</b>: "+md.a_des+" desembolso(s), "+(md.a_inc||0)+" incremental(is).";
+      }
+    } else if(detM){
+      const md=getMonthData(detM);
+      if(detPDV==="saipos"){
+        resp="<b>Saipos</b> em <b>"+detM+"</b>: "+(md.s_des||0)+" desembolsos, "+(md.s_inc||0)+" incrementais.";
+      } else {
+        resp="<b>Anota</b> em <b>"+detM+"</b>: "+(md.a_des||0)+" desembolsos, "+(md.a_inc||0)+" incrementais.";
+      }
+    } else {
+      const sT=sumMO("s_des"),aT=sumMO("a_des"),sI=sumMO("s_inc"),aI=sumMO("a_inc");
+      resp="<b>Saipos:</b> "+sT+" desembolsos totais, "+sI+" incrementais.<br><b>Anota:</b> "+aT+" desembolsos totais, "+aI+" incrementais.<br>O PDV líder em volume é <b>"+(sT>aT?"Saipos":"Anota")+"</b>.";
+    }
+
+  /* ═ FUNIL ═ */
+  } else if(ql.includes("funil")||ql.includes("conversão")||ql.includes("conversao")){
+    if(detM && isMaiJun){
+      resp="Não há dados de funil disponíveis para <b>"+detM+"</b>.";
+    } else {
+      const d=detM?getMonthData(detM):getData("Total","geral");
+      resp="<b>Funil ("+periodLabel()+"):</b><br>PA Elegíveis: "+fmt(d.pa,"k")+"<br>Impactados: "+fmt(d.impactados,"k")+"<br>Visitors: "+fmt(d.visitors,"k")+"<br>Cliques: "+fmt(d.cliques,"k")+"<br>Formalizados: "+(d.formalizados||0)+"<br>Desembolsos: "+(d.desembolsos||0)+"<br>Incrementais: "+(d.desemb_incr||0);
+    }
+
+  /* ═ PA / ELEGÍVEIS ═ */
+  } else if(ql.includes("pa")||ql.includes("elegível")||ql.includes("elegíveis")||ql.includes("elegivel")){
+    if(detM){
+      const md=getMonthData(detM);
+      if(!md||!hasData(md,"pa")){
+        resp="Não há dados de PA disponíveis para <b>"+detM+"</b>.";
+      } else {
+        resp="A base de PA em <b>"+detM+"</b> é de <b>"+fmt(md.pa,"k")+"</b> PDVs elegíveis, com <b>"+fmt(md.pa_val,"$")+"</b> em crédito disponível.";
+      }
+    } else {
+      resp="A base de PA mais recente (Mai/26) é de <b>"+fmt(SC["Mai/26"].pa,"k")+"</b> PDVs, com <b>"+fmt(SC["Mai/26"].pa_val,"$")+"</b> em crédito disponível.";
+    }
+
+  /* ═ CAMPANHAS ═ */
+  } else if(ql.includes("campanha")||ql.includes("quantas campanhas")){
+    if(detM){
+      const mc=CAMPS.filter(c=>c.mo===detM);
+      if(mc.length===0){
+        resp="Não há campanhas registradas para <b>"+detM+"</b>.";
+      } else {
+        resp="Em <b>"+detM+"</b> foram <b>"+mc.length+"</b> campanhas: "+mc.map(c=>(CAMP_NAMES[c.n]||c.n)).join(", ")+".";
+      }
+    } else {
+      resp="São <b>"+CAMPS.length+"</b> campanhas no total. Saipos: "+CAMPS.filter(c=>c.pdv==="saipos").length+", Anota: "+CAMPS.filter(c=>c.pdv==="anota").length+". Planejadas: "+CAL.filter(c=>c.status==="Planejamento").length+".";
+    }
+
+  /* ═ TKM / TICKET ═ */
+  } else if(ql.includes("tkm")||ql.includes("ticket")){
+    if(detM){
+      const md=getMonthData(detM);
+      if(!md||!hasData(md,"tkm")){
+        resp="Não há dados de TKM para <b>"+detM+"</b>.";
+      } else {
+        resp="O TKM em <b>"+detM+"</b> é de <b>"+fmt(md.tkm,"$")+"</b>. TKM incremental: <b>"+fmt(md.tkm_incr,"$")+"</b>.";
+      }
+    } else {
+      const d=getData("Total","geral");
+      resp="O TKM acumulado é de <b>"+fmt(d.tkm,"$")+"</b>. TKM incremental: <b>"+fmt(d.tkm_incr,"$")+"</b>.";
+    }
+
+  /* ═ VISITORS / CLIQUES ═ */
+  } else if(ql.includes("visitor")||ql.includes("visita")||ql.includes("visualiz")){
+    if(detM){
+      const md=getMonthData(detM);
+      if(!md||!hasData(md,"visitors")){
+        resp="Não há dados de visitors para <b>"+detM+"</b>.";
+      } else {
+        resp="Em <b>"+detM+"</b> houve <b>"+(md.visitors||0)+" visitors</b>.";
+      }
+    } else {
+      resp="Total de visitors acumulado (Jan–Mai/26): <b>"+fmt(sumMO("visitors"))+"</b>.<br>Por mês: "+MO.map(x=>x+": "+(SC[x].visitors||0)).join(", ")+".";
+    }
+  } else if(ql.includes("clique")||ql.includes("click")){
+    if(detM){
+      const md=getMonthData(detM);
+      if(!md||!hasData(md,"cliques")){
+        resp="Não há dados de cliques para <b>"+detM+"</b>.";
+      } else {
+        resp="Em <b>"+detM+"</b> houve <b>"+(md.cliques||0)+" cliques</b>.";
+      }
+    } else {
+      resp="Total de cliques acumulado (Jan–Mai/26): <b>"+fmt(sumMO("cliques"))+"</b>.<br>Por mês: "+MO.map(x=>x+": "+(SC[x].cliques||0)).join(", ")+".";
+    }
+
+  /* ═ IMPACTADOS ═ */
+  } else if(ql.includes("impactado")){
+    if(detM){
+      const md=getMonthData(detM);
+      if(!md||!hasData(md,"impactados")){
+        resp="Não há dados de impactados para <b>"+detM+"</b>.";
+      } else {
+        resp="Em <b>"+detM+"</b> foram <b>"+fmt(md.impactados)+" impactados</b> (CNPJs únicos).";
+      }
+    } else {
+      resp="Total de impactados acumulado (CNPJ únicos): <b>"+fmt(TOTAL_IMPACTADOS_UNIQUE)+"</b>.";
+    }
+
+  /* ═ FALLBACK ═ */
+  } else {
+    resp="Não tenho informações específicas sobre essa pergunta. Posso te ajudar com: <b>desembolsos</b>, <b>formalizados</b>, <b>incrementalidade</b>, <b>funil</b>, <b>campanhas</b>, <b>Saipos vs Anota</b>, <b>PA/elegíveis</b>, <b>TKM</b>, <b>visitors</b>, <b>cliques</b> e <b>impactados</b>. Também posso filtrar por mês (ex: \"desembolsos em março\").";
+  }
+
+  chatMessages.push({role:"bot",text:resp});
+  renderAgente();
+}
+
+/* ═══ NAV / FILTERS ═══ */
+function switchPage(page){
+  currentPage=page;
+  document.querySelectorAll(".nav-tab").forEach(t=>t.classList.toggle("active",t.dataset.page===page));
+  document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id==="page-"+page));
+  document.getElementById("filtersBar").classList.toggle("hidden",page!=="resultados");
+  destroyCharts();
+  renderCurrentPage();
+}
+
+function switchPDV(p){currentPDV=p;updateFilters();destroyCharts();renderResultados()}
+function switchMonth(m){currentMonth=m;updateFilters();destroyCharts();renderResultados()}
+
+function renderCurrentPage(){
+  if(currentPage==="scorecard")renderScorecard();
+  else if(currentPage==="resultados")renderResultados();
+  else if(currentPage==="agente")renderAgente();
+  else renderComunicacoes();
+}
+
+/* renderFCAs removida */
+
+function updateFilters(){
+  let pdvH='';
+  [{id:"geral",l:"Geral"},{id:"saipos",l:"Saipos"},{id:"anota",l:"Anota"}].forEach(p=>{
+    pdvH+='<button class="pill'+(currentPDV===p.id?" active":"")+'" data-pdv="'+p.id+'" onclick="switchPDV(\''+p.id+'\')">'+p.l+'</button>';
+  });
+  document.getElementById("pdvPills").innerHTML=pdvH;
+
+  const MOALL=[...MO,"Jun/26"];
+  let moH='<button class="pill total-pill'+(currentMonth==="Total"?" active":"")+'" data-month="Total" onclick="switchMonth(\'Total\')">Total</button>';
+  MOALL.forEach(m=>{moH+='<button class="pill'+(m===currentMonth?" active":"")+'" data-month="'+m+'" onclick="switchMonth(\''+m+'\')">'+m+'</button>'});
+  document.getElementById("monthPills").innerHTML=moH;
+}
+
+function clearAllFilters(){currentPDV="geral";currentMonth="Total";currentGalleryPDV="geral";updateFilters();destroyCharts();renderCurrentPage()}
+
+function exportScorecard(){
+  const secs=[
+    {group:"PDV",rows:[{l:"PA (elegíveis) #",k:"pa"},{l:"PA ($)",k:"pa_val"},{l:"Impactados",k:"impactados"},{l:"Interagiram (Cliques)",k:"cliques"},{l:"Formalizaram",k:"formalizados"},{l:"Desembolsaram",k:"desembolsos"},{l:"Desembolso ($)",k:"desemb_val"},{l:"TKM",k:"tkm"},{l:"Desembolsaram Incremental",k:"desemb_incr"},{l:"Desemb. Incremental ($)",k:"desemb_incr_val"},{l:"TKM Incremental",k:"tkm_incr"},{l:"% Dinheiros",k:"pct_din"}]},
+    {group:"Saipos",rows:[{l:"Saipos — PA (elegíveis) #",k:"s_pa"},{l:"Saipos — PA ($)",k:"s_pa_val"},{l:"Saipos — Impactados",k:"s_imp"},{l:"Saipos — Interagiram",k:"s_int"},{l:"Saipos — Desembolsos",k:"s_des"},{l:"Saipos — Desemb. Incremental",k:"s_inc"}]},
+    {group:"Anota",rows:[{l:"Anota — PA (elegíveis) #",k:"a_pa"},{l:"Anota — PA ($)",k:"a_pa_val"},{l:"Anota — Impactados",k:"a_imp"},{l:"Anota — Conversão",k:"a_con"},{l:"Anota — Desembolsos",k:"a_des"},{l:"Anota — Desemb. Incremental",k:"a_inc"}]}
+  ];
+  const data=[["Grupo","Etapa",...MO5]];
+  secs.forEach(sec=>{sec.rows.forEach(row=>{
+    const r=[sec.group,row.l];
+    
